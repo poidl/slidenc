@@ -2,9 +2,7 @@
 # available on the matplotlib website.
 import sys, os, random
 from functools import partial as fpartial
-
 from PyQt4 import QtGui, QtCore
-
 import numpy as np
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -15,13 +13,13 @@ import pyomReader
 import romsReader
 
 progname = os.path.basename(sys.argv[0])
-progversion = "0.1"
+progversion = "0.0"
 
 class myax():
     def __init__(self):
         self.orientation0=['t','z','y','x']
         self.orientation=['t','z','y','x']
-        self.indices=[1,1]        
+        self.indices=[0,0]        
     def setax(self,ind,string):
         swap=self.orientation[ind]
         oldind=self.orientation.index(string)
@@ -33,7 +31,8 @@ class myax():
         for ii in left:
             tmp.append([ii,self.orientation0.index(ii)])              
         srt_list= sorted(tmp, key=lambda x: x[1])
-        self.orientation[:ind]=[li[0] for li in srt_list]                   
+        self.orientation[:ind]=[li[0] for li in srt_list]
+        self.indices=[0,0]                   
     def tup(self):
         li=['','','','']; cnt=0 
         for ii in range(4):
@@ -56,10 +55,12 @@ class button_box(QtGui.QGroupBox):
         self.button3=QtGui.QRadioButton(self.myax.orientation[inds[2]])
         self.button3.setCheckable(True)
         
-        hbox = QtGui.QHBoxLayout() 
-        hbox.addWidget(self.button1)
-        hbox.addWidget(self.button2)
-        hbox.addWidget(self.button3)
+        if flag==True: layout= QtGui.QHBoxLayout()
+        else: layout= QtGui.QVBoxLayout()
+        
+        layout.addWidget(self.button1)
+        layout.addWidget(self.button2)
+        layout.addWidget(self.button3)
     
         self.modeGroup=QtGui.QButtonGroup()
         self.modeGroup.setExclusive(True)
@@ -70,12 +71,14 @@ class button_box(QtGui.QGroupBox):
             #self.button4=QtGui.QPushButton(self.myax.orientation[inds[3]])
             self.button4=QtGui.QRadioButton(self.myax.orientation[inds[3]])
             self.button4.setCheckable(True)
-            hbox.addWidget(self.button4)
+            layout.addWidget(self.button4)
             self.modeGroup.addButton(self.button4)
             self.button4.setChecked(True)
         else: self.button3.setChecked(True)
 
-        self.setLayout(hbox)
+        self.setLayout(layout)
+        self.setSizePolicy(QtGui.QSizePolicy.Maximum,
+                                   QtGui.QSizePolicy.Maximum)
         
     def update_txt(self,myax):
         self.button1.setText(myax.orientation[0])
@@ -91,10 +94,11 @@ class MyMplCanvas(FigureCanvas):
         self.myax=myax()
         self.flip=False
         self.show_contours=show_contours
-        fig = Figure(figsize=(width, height), dpi=dpi)
+        #fig = Figure(figsize=(width, height), dpi=dpi)
+        fig=Figure()
         self.axes = fig.add_subplot(111)        
         # We want the axes cleared every time plot() is called
-        #self.axes.hold(False)       
+        self.axes.hold(False)       
         self.colorbar=fig.colorbar
         
         self.initialize_figure()
@@ -102,9 +106,14 @@ class MyMplCanvas(FigureCanvas):
         FigureCanvas.__init__(self, fig)
         self.setParent(parent)
         
+        #def sizeHint(self):
+        #    return QtCore.QSize(700,700)
         FigureCanvas.setSizePolicy(self,
                                    QtGui.QSizePolicy.Expanding,
                                    QtGui.QSizePolicy.Expanding)
+        
+        #FigureCanvas.setPreferredSize(QtCore.QSize(800,800))
+        #FigureCanvas.setMaximumSize(int(800), int(800))
         FigureCanvas.updateGeometry(self)
 
     def initialize_figure(self):
@@ -114,6 +123,7 @@ class MyStaticMplCanvas(MyMplCanvas):
     def initialize_figure(self):   
         pp1=self.reader.get_var(self.cf_str,self.myax.tup())
         self.a=self.axes.imshow(pp1,interpolation='nearest',origin='lower')
+        #if not(np.all(np.isnan(pp1))):
         self.cb=self.colorbar(self.a)
         
     def reset_figure(self):
@@ -124,8 +134,9 @@ class MyStaticMplCanvas(MyMplCanvas):
         if self.cb:
             self.figure.delaxes(self.figure.axes[1])
             self.figure.subplots_adjust(right=0.90)  #default right padding
+            #if not(np.all(np.isnan(pp1))): 
             self.cb = self.figure.colorbar(self.a)
-        self.draw()            
+        #self.draw()            
 
     def update_contourf(self):   
         pp1=self.reader.get_var(self.cf_str,self.myax.tup())
@@ -167,12 +178,15 @@ class MyStaticMplCanvas(MyMplCanvas):
         self.reset_figure()
         self.update_contour()
     
-    def pick_var(self,text):
+    def pick_contourf_var(self,text):
         self.cf_str=str(text)
         self.update_figure()
+    def pick_contour_var(self,text):
+        self.c_str=str(text)
+        self.update_figure()
                
-    def toggle_contours(self,state):
-        if state == QtCore.Qt.Checked:
+    def toggle_contours(self,on):
+        if on == True:
             self.show_contours=True
         else: 
             self.show_contours=False
@@ -189,108 +203,133 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.main_widget = QtGui.QWidget(self)
         
-        pr=pyomReader.reader()
-        #pr=romsReader.reader()
-        
-        zt=pr.get_axis('z')
-        lcd = QtGui.QLCDNumber(self)               
-        sld = QtGui.QSlider(QtCore.Qt.Horizontal, self)       
-        sld.setMinimum(0)
-        sld.setMaximum(np.size(zt)-1)
-        
-        time=pr.get_axis('time')
-        lcd2 = QtGui.QLCDNumber(self)
-        sld2 = QtGui.QSlider(QtCore.Qt.Horizontal, self)
-        sld2.setMinimum(0)
-        sld2.setMaximum(np.size(time)-1)
-               
-        show_contours=False
-        sc = MyStaticMplCanvas(pr,show_contours,self.main_widget, width=5, height=4, dpi=100)
-
-        varlist=pr.get_var_names_4d()
-        combo = QtGui.QComboBox(self)
-        combo.addItems(varlist)
-               
-        combo.activated[str].connect(sc.pick_var)
-
-        cb = QtGui.QCheckBox('Show contour lines', self)
-        
-        cb.stateChanged.connect(sc.toggle_contours)
-               
-        l = QtGui.QVBoxLayout(self.main_widget)             
-        
-        groupbox=button_box(True,sc.myax)
-        groupbox_2=button_box(False,sc.myax)        
-        
-        groupbox3=QtGui.QGroupBox(self)
-        hbox3 = QtGui.QHBoxLayout(groupbox3)
-        lbl3 = QtGui.QLabel(self)
-        lbl3.setText(sc.myax.orientation[0]) 
-        hbox3.addWidget(lbl3)
-        hbox3.addWidget(lcd) 
-        
-        groupbox4=QtGui.QGroupBox(self)
-        hbox4 = QtGui.QHBoxLayout(groupbox4) 
-        lbl4 = QtGui.QLabel(self)
-        lbl4.setText(sc.myax.orientation[1])        
-        hbox4.addWidget(lbl4)
-        hbox4.addWidget(lcd2)  
-         
-        groupbox5=QtGui.QGroupBox(self) 
-        hbox5 = QtGui.QHBoxLayout(groupbox5)
-        lbl5 = QtGui.QLabel(self)
-        lbl6 = QtGui.QLabel(self)
-        lbl5.setText('horz_ax')
-        lbl6.setText('vert_ax')
-        hbox5.addWidget(lbl5)
-        hbox5.addWidget(groupbox)
-        hbox5.addWidget(lbl6)
-        hbox5.addWidget(groupbox_2)
-        
-        lbl3.setText(sc.myax.orientation[1])
-        lbl4.setText(sc.myax.orientation[0])                   
-        
-        def doit(self):
-            sc.myax.setax(3,str(self.text()))                        
-            #print sc.myax.orientation
-            groupbox_2.update_txt(sc.myax)
-            groupbox_2.button3.setChecked(True)
-            lbl3.setText(sc.myax.orientation[1])
-            lbl4.setText(sc.myax.orientation[0])
-            sc.update_axis()
-            print sc.axes
-            print sc.colorbar
-            #print sc.myax.orientation
-            #print sc.myax.tup()
+        reader=pyomReader.reader()
+        #reader=romsReader.reader()
                        
-        def doit2(self):
-            sc.myax.setax(2,str(self.text()))            
-            lbl3.setText(sc.myax.orientation[1])
-            lbl4.setText(sc.myax.orientation[0])
-            sc.update_axis()
-            #print sc.myax.orientation
-            #print sc.myax.tup()
-                
-        groupbox.modeGroup.buttonClicked.connect(doit)    
-        groupbox_2.modeGroup.buttonClicked.connect(doit2)    
-            
-        l.addWidget(sc)
-        l.addWidget(groupbox5)
-        l.addWidget(groupbox3)        
-        l.addWidget(sld)
-        l.addWidget(groupbox4)
-        l.addWidget(sld2)
-        l.addWidget(combo)
-        l.addWidget(cb)
+        show_contours=False
+        canvas = MyStaticMplCanvas(reader,show_contours,self.main_widget, width=5, height=4, dpi=100)
+               
+        layout_main = QtGui.QVBoxLayout(self.main_widget)             
+        
+        buttons_horz=button_box(True,canvas.myax)
+        buttons_vert=button_box(False,canvas.myax)        
+        
+        sublayout_slider1 = QtGui.QHBoxLayout()
+        label_slider1 = QtGui.QLabel(self)
+        label_slider1.setText(canvas.myax.orientation[1]) 
+        lcd_slider1 = QtGui.QLCDNumber(self)   
+        lcd_slider1.setSegmentStyle(2)            
+        slider1 = QtGui.QSlider(QtCore.Qt.Horizontal, self)       
+        
+        sublayout_slider1.addWidget(label_slider1)
+        sublayout_slider1.addWidget(lcd_slider1)
+        sublayout_slider1.addWidget(slider1)
+
+        sublayout_slider2 = QtGui.QHBoxLayout() 
+        label_slider2 = QtGui.QLabel(self)
+        label_slider2.setText(canvas.myax.orientation[0])
+        lcd_slider2 = QtGui.QLCDNumber(self)
+        lcd_slider2.setSegmentStyle(2)
+        slider2 = QtGui.QSlider(QtCore.Qt.Horizontal, self)     
+        sublayout_slider2.addWidget(label_slider2)
+        sublayout_slider2.addWidget(lcd_slider2)
+        sublayout_slider2.addWidget(slider2)                            
+                               
+        grpbox_contourf=QtGui.QGroupBox('Contour fill',self)
+        grpbox_contourf.setLayout(QtGui.QHBoxLayout())
+        varlist=reader.get_var_names_4d()
+        combo1 = QtGui.QComboBox(self)
+        combo1.addItems(varlist)               
+        grpbox_contourf.layout().addWidget(combo1) 
+                            
+        grpbox_contour=QtGui.QGroupBox('Show contours',self) 
+        grpbox_contour.setCheckable(True)
+        grpbox_contour.setChecked(False)
+        combo2 = QtGui.QComboBox(self)
+        combo2.addItems(varlist)
+        grpbox_contour.setLayout(QtGui.QHBoxLayout())
+        grpbox_contour.layout().addWidget(combo2)
+        
+        #groupbox8=QtGui.QGroupBox(self)
+        sublayout_varpicker = QtGui.QHBoxLayout()
+        sublayout_varpicker.addWidget(grpbox_contourf)
+        sublayout_varpicker.addWidget(grpbox_contour)
+        
+        layout_upper = QtGui.QGridLayout()
+        layout_upper.addWidget(buttons_vert,0,0)
+        layout_upper.addWidget(canvas,0,1)
+        layout_upper.addWidget(buttons_horz,1,1,QtCore.Qt.AlignHCenter)
+
+        layout_lower=QtGui.QVBoxLayout()
+        layout_lower.addLayout(sublayout_slider1)        
+        layout_lower.addLayout(sublayout_slider2)
+        layout_lower.addLayout(sublayout_varpicker)
+
+        #layout_main.setStretchFactor(canvas,10)
+        #layout_main.setStretchFactor(groupbox_big,0.1)
+        
+        layout_main.addLayout(layout_upper)
+        layout_main.addLayout(layout_lower)
 
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
-
-        sld.valueChanged.connect(lcd.display)
-        sld.valueChanged.connect(fpartial(sc.slider_moved,active_dim=1)) 
         
-        sld2.valueChanged.connect(lcd2.display)
-        sld2.valueChanged.connect(fpartial(sc.slider_moved,active_dim=0))  
+##################################################################
+        
+        tmp=reader.get_axis(canvas.myax.orientation[1])
+        slider1.setMinimum(0)
+        slider1.setMaximum(np.size(tmp)-1)
+        tmp=reader.get_axis(canvas.myax.orientation[0])
+        slider2.setMinimum(0)
+        slider2.setMaximum(np.size(tmp)-1)
+        
+        combo1.activated[str].connect(canvas.pick_contourf_var)
+        grpbox_contour.toggled.connect(canvas.toggle_contours)       
+        combo2.activated[str].connect(canvas.pick_contour_var)        
+        
+        def slot_buttons_horz(self):
+            canvas.myax.setax(3,str(self.text()))                        
+            #print canvas.myax.orientation
+            buttons_vert.update_txt(canvas.myax)
+            buttons_vert.button3.setChecked(True)
+            label_slider1.setText(canvas.myax.orientation[1])
+            label_slider2.setText(canvas.myax.orientation[0])
+            #myax.indices=[0,0]
+            canvas.update_axis()
+            slider1.setValue(0)
+            slider2.setValue(0)
+            tmp=reader.get_axis(canvas.myax.orientation[1])
+            slider1.setMinimum(0)
+            slider1.setMaximum(np.size(tmp)-1)
+            tmp=reader.get_axis(canvas.myax.orientation[0])
+            slider2.setMinimum(0)
+            slider2.setMaximum(np.size(tmp)-1)
+                       
+        def slot_buttons_vert(self):
+            canvas.myax.setax(2,str(self.text()))            
+            label_slider1.setText(canvas.myax.orientation[1])
+            label_slider2.setText(canvas.myax.orientation[0])
+            #myax.indices=[0,0]            
+            canvas.update_axis()
+            slider1.setValue(0)
+            slider2.setValue(0)
+            tmp=reader.get_axis(canvas.myax.orientation[1])
+            slider1.setMinimum(0)
+            slider1.setMaximum(np.size(tmp)-1)
+            tmp=reader.get_axis(canvas.myax.orientation[0])
+            slider2.setMinimum(0)
+            slider2.setMaximum(np.size(tmp)-1)
+            #print canvas.myax.orientation
+            #print canvas.myax.tup()
+            
+        buttons_horz.modeGroup.buttonClicked.connect(slot_buttons_horz)    
+        buttons_vert.modeGroup.buttonClicked.connect(slot_buttons_vert) 
+
+        slider1.valueChanged.connect(lcd_slider1.display)
+        slider1.valueChanged.connect(fpartial(canvas.slider_moved,active_dim=1)) 
+        
+        slider2.valueChanged.connect(lcd_slider2.display)
+        slider2.valueChanged.connect(fpartial(canvas.slider_moved,active_dim=0))  
         
                             
         

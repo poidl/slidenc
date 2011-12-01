@@ -34,7 +34,10 @@ class reader:
         except KeyError:
             va=self.custom_var(string,tup)            
         va[va<-1e20]=np.nan;
-        va[va>1e20]=np.nan;            
+        va[va>1e20]=np.nan;
+        if np.all(np.isnan(va)):
+            va=np.zeros(np.shape(va));
+            va=np.zeros(np.shape(va));    
         return va
 
 
@@ -45,7 +48,7 @@ class reader:
             va=self.ff.variables['yt'][:]
         elif string=='z':
             va=self.ff.variables['zt'][:]
-        elif string=='time':
+        elif string=='t':
             va=self.ff.variables['Time'][:]
         va[va<-1e20]=np.nan;
         va[va>1e20]=np.nan;                       
