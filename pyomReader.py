@@ -3,11 +3,17 @@ import numpy as np
 
 class reader:
     ff = NF('/home/stefan/arbeit/pyom/run03/pyOM.cdf', 'r')
+    #ff = NF('/home/stefan/arbeit/pyom/run03/zonal_ave.cdf', 'r')
+    #ff = NF('/suse/home/stefan/arbeit/Roms_tools/run128/ROMS_FILES/roms_avg_1.nc', 'r')
+    #ff = NF('/home/stefan/arbeit/him/run43/saves/save0.00e00.041.016.nc', 'r')
     modelVarNames = ff.variables.keys()
     customVarNames=['b_full']
     customVarDims=[4]
     varNames=modelVarNames+customVarNames
     
+    def set_filename(self,string):
+        ff = NF(string, 'r')
+        return ff
     def custom_var(self,string,tup):
         if string=='b_full':
             bd=self.ff.variables['b'][tup]
@@ -26,7 +32,14 @@ class reader:
         for ii in self.customVarNames:
             if self.customVarDims[self.customVarNames.index(ii)]==4: l.append(ii)            
         return l    
-        
+
+#    def get_var_names(self):
+#        l=[]
+#        for ii in self.modelVarNames:
+#            if len(self.ff.variables[ii].dimensions)==4: l.append(ii)
+#        for ii in self.customVarNames:
+#            if self.customVarDims[self.customVarNames.index(ii)]==4: l.append(ii)            
+#        return l         
 
     def get_var(self,string,tup):
         try:
@@ -42,16 +55,15 @@ class reader:
 
 
     def  get_axis(self,string):
-        if string=='x':
-            va=self.ff.variables['xt'][:]
-        elif string=='y':
-            va=self.ff.variables['yt'][:]
-        elif string=='z':
-            va=self.ff.variables['zt'][:]
-        elif string=='t':
-            va=self.ff.variables['Time'][:]
-        va[va<-1e20]=np.nan;
-        va[va>1e20]=np.nan;                       
-        return va
+        return self.ff.variables[string][:]        
+#        if string=='x':
+#            va=self.ff.variables['xt'][:]
+#        elif string=='y':
+#            va=self.ff.variables['yt'][:]
+#        elif string=='z':
+#            va=self.ff.variables['zt'][:]
+#        elif string=='t':
+#            va=self.ff.variables['Time'][:]                      
+#        return va
  
     
