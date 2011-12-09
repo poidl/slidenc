@@ -23,6 +23,7 @@ progname = os.path.basename(sys.argv[0])
 
 progversion = "0.0"
 ndims_max=5
+
 class myax_new():
     def __init__(self):
         self.dim_names=[]
@@ -182,7 +183,13 @@ class slider_box(QtGui.QWidget):
                 self.sliderlist[ii].myslider.setValue(1)
                 self.sliderlist[ii].mylcd.display(myax.indices[ii])
                 self.sliderlist[ii].mylabel.setText(myax.get_dimname(ii))
-                self.sliderlist[ii].show()                              
+                self.sliderlist[ii].show()
+                
+    def disconnect_all(self):
+        for ii in self.sliderlist:
+            try: ii.myslider.valueChanged.disconnect()
+            except: pass 
+                     
             
 class MyMplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
@@ -232,7 +239,7 @@ class MyStaticMplCanvas(MyMplCanvas):
             self.axes.hold(False)
         self.draw()     
         
-    def reset_figure(self): 
+    def reset_figure(self):
         v=self.reader.get_var(self.cf_str,self.myax.tup())
         if self.flip==True: v=np.transpose(v);
         li= [str(self.myax.dim_names[self.myax.perm[-1]]),
@@ -418,25 +425,28 @@ class ApplicationWindow(QtGui.QMainWindow):
             sliderbox.setsliders(reader,canvas.myax)            
 
         def connect_sliders(sliderbox,myax,reader):
-            for ii in range(len(myax.indices)):       
+            for ii in range(len(myax.indices)):    
                 sliderbox.sliderlist[ii].myslider.valueChanged.connect(sliderbox.sliderlist[ii].mylcd.display)
-                sliderbox.sliderlist[ii].myslider.valueChanged.connect(fpartial(canvas.slider_moved,active_dim=ii)) 
-                       
+                sliderbox.sliderlist[ii].myslider.valueChanged.connect(fpartial(canvas.slider_moved,active_dim=ii))        
         def setcombo2():
             combo2.clear()
             dn=canvas.myax.dim_names
             varlist=reader.get_combo2_vars(dn)
             combo2.addItems(varlist)
             canvas.c_str=varlist[0]
-                    
+        
+           
         def pick_cf_var(text):
             canvas.myax.setax(reader,str(text))
             if canvas.myax.ndims>1:
-                sliderbox.setsliders(reader,canvas.myax)
-                connect_sliders(sliderbox,canvas.myax,reader)
-                buttons_horz.setbuttons(True,canvas.myax)
-                buttons_vert.setbuttons(False,canvas.myax)
                 canvas.cf_str=str(text)
+                sliderbox.disconnect_all()
+                sliderbox.setsliders(reader,canvas.myax)
+                connect_sliders(sliderbox,canvas.myax,reader)            
+                
+
+                buttons_horz.setbuttons(True,canvas.myax)
+                buttons_vert.setbuttons(False,canvas.myax)                
                 setcombo2()
                 canvas.update_figure()
             else: print 'cannot contour a 1-d variable'  
