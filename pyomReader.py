@@ -3,8 +3,8 @@ from netCDF4 import Dataset as NF
 import numpy as np
 
 class reader:
-    #ff = NF('/home/stefan/arbeit/pyom/run03/pyOM.cdf', 'r')
-    ff = NF('/home/stefan/arbeit/pyom/run03/zonal_ave.cdf', 'r')
+    ff = NF('/home/stefan/arbeit/pyom/run03/pyOM.cdf', 'r')
+    #ff = NF('/home/stefan/arbeit/pyom/run03/zonal_ave.cdf', 'r')
 #    ff = NF('/home/stefan/arbeit/pyom/bin/acc_gyre1/pyOM.cdf', 'r')
 #    ff = NF('/home/stefan/arbeit/pyom/bin/barbi_exp1/pyOM.cdf', 'r')
 #    ff = NF('/home/stefan/arbeit/pyom/bin/internal_wave1/pyOM.cdf', 'r')

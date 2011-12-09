@@ -14,8 +14,8 @@ import matplotlib as mpl
 from matplotlib.lines import Line2D 
 #from  Scientific.IO.NetCDF  import NetCDFFile as NF
 from netCDF4 import Dataset as NF
+import defaultReader
 import pyomReader
-
 import romsReader
 import himReader
 
@@ -366,7 +366,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.main_widget = QtGui.QWidget(self)
         
-        reader=pyomReader.reader()                    
+        reader=defaultReader.reader()                    
         show_contours=False
         canvas = MyStaticMplCanvas(reader,show_contours,self.main_widget, width=5, height=4, dpi=100)
                                             
@@ -415,9 +415,9 @@ class ApplicationWindow(QtGui.QMainWindow):
         def slot_buttons_horz(idnr):
             canvas.myax.permute(canvas.myax.ndims-1,idnr)
             canvas.update_figure()                      
-            buttons_vert.update_txt(canvas.myax)
             sliderbox.setsliders(reader,canvas.myax)           
-                       
+            buttons_vert.update_txt(canvas.myax) 
+                      
         def slot_buttons_vert(idnr):
             goof=canvas.myax.dim_names.index(buttons_vert.buttonlist[idnr].text())           
             canvas.myax.permute(canvas.myax.ndims-2,goof)
@@ -428,6 +428,7 @@ class ApplicationWindow(QtGui.QMainWindow):
             for ii in range(len(myax.indices)):    
                 sliderbox.sliderlist[ii].myslider.valueChanged.connect(sliderbox.sliderlist[ii].mylcd.display)
                 sliderbox.sliderlist[ii].myslider.valueChanged.connect(fpartial(canvas.slider_moved,active_dim=ii))        
+
         def setcombo2():
             combo2.clear()
             dn=canvas.myax.dim_names

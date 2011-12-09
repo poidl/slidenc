@@ -66,7 +66,7 @@ print ax.perm
 ax.permute(ax.ndims-2,1)
  
     
-         
+print mpl.__version__         
         
     
                 
