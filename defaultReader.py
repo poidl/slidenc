@@ -1,12 +1,24 @@
+# -*- coding: utf-8 -*-
 #from  Scientific.IO.NetCDF  import NetCDFFile as NF
 from netCDF4 import Dataset as NF
 import numpy as np
 
 class reader:
-#    ff = NF('/home/stefan/arbeit/pyom/run03/pyOM.cdf', 'r')
-    ff = NF('/suse/home/stefan/arbeit/Roms_tools/run128/ROMS_FILES/roms_avg_1.nc', 'r')
-#    ff = NF('/home/stefan/arbeit/him/run43/saves/save0.00e00.041.016.nc', 'r')
+    def __init__(self):
         
+        self.ff=""
+        self.keys_2d_variables=[]
+
+    def open(self,string):
+#        self.ff = NF('/ubuntu10.4_home/stefan/arbeit/him/run75/saves/save0.00e00.213.085.nc', 'r')
+        self.ff = NF(str(string), 'r')
+        li=self.ff.variables.keys()
+        self.keys_2d_variables=[]
+        for ii in li:
+            dl=self.ff.variables[ii].dimensions
+            if len(dl)>1:
+                self.keys_2d_variables.append(ii)
+
 
     def get_var(self,string,tup):
         try:
@@ -28,6 +40,11 @@ class reader:
                 varlist.append(ii)
         return varlist
             
-    
+#    def get_first_2d_var(self):
+#        li=self.ff.variables.keys() 
+#        for ii in range(len(li)):
+#            dl=self.ff.variables[li[ii]].dimensions
+#            if len(dl)>1:
+#                return ii,li[ii]
  
     

@@ -15,10 +15,7 @@ Dependencies: python, pyqt4, numpy, matplotlib, netCDF4
 
 Usage: 
 
-1) Open the file "default Reader" and edit the line 
-> ff = NF('...')
-
-2)Start the program by typing
+Start the program by typing
 >python __init__.py
 in a terminal
 
