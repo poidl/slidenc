@@ -22,7 +22,7 @@ class myax():
         self.dim_names=reader.ff.variables[str(string)].dimensions
         self.ndims=len(self.dim_names)
         self.perm=range(self.ndims)        
-        self.indices_ini=[1]*(self.ndims-2) 
+        self.indices_ini=[0]*(self.ndims-2) 
         self.indices=self.indices_ini[:]
     def permute(self,ind,val):
         tmp=self.perm[:]
@@ -47,9 +47,6 @@ class myax():
             else: li[ii]=self.indices[cnt];  cnt+=1 
         return tuple(li)
 
-
-
-
 class pdata:
     def __init__(self):
         self.reader=defaultReader.reader()
@@ -59,9 +56,14 @@ class pdata:
         self.flip=False
         self.show_contours=False
         self.field_2d=np.nan
+        self.field_2d_c=np.nan
         self.vertical=''
-        
+
     def update(self):
+        self.update_cf()
+        self.update_c()
+            
+    def update_cf(self):
         self.field_2d=self.reader.get_var(self.cf_str,self.myax.tup())   
         tmp=self.myax.perm[-2:] 
         self.flip=True if tmp[0]>tmp[1] else False
@@ -103,17 +105,19 @@ class pdata:
             #self.field_2d=self.reader.get_var(self.cf_str,self.myax.tup())   
             if self.flip==True: 
                 self.field_2d=np.transpose(self.field_2d);
-
+                
+    def update_c(self):
+        self.field_2d_c=self.reader.get_var(self.c_str,self.myax.tup())    
+        if self.flip==True: 
+            self.field_2d_c=np.transpose(self.field_2d_c);
+        
 class MyMplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
     def __init__(self,reader=None,show_contours=False,parent=None, width=5, height=4, dpi=100):
         self.pdata=pdata()
         fig=Figure()
         self.axes = fig.add_subplot(111)        
-        # We want the axes cleared every time plot() is called
         self.axes.hold(False)       
-        self.colorbar=fig.colorbar
-
         FigureCanvas.__init__(self, fig)
         self.setParent(parent)
         
@@ -123,55 +127,40 @@ class MyMplCanvas(FigureCanvas):
         
         FigureCanvas.updateGeometry(self)
 
-class MyStaticMplCanvas(MyMplCanvas):       
-    def reset_contour(self):        
-        if self.pdata.show_contours:
-            self.axes.hold(True) 
-        #what a mess. use hasattr(...) instead??
-        try:
-            for coll in self.ba.collections:
-                try:    
-                    self.axes.collections.remove(coll)
-                except: pass  
-        except AttributeError: pass     
-        try:
-            while len(self.ba.labelTexts)>0: self.ba.pop_label()
-        except: pass
-        if self.pdata.show_contours:
-            self.ba=self.axes.contour(self.pdata.field_2d,colors='k')
-            self.ba.clabel()
-            self.axes.hold(False)
-        self.draw()     
+class MyStaticMplCanvas(MyMplCanvas):    
         
     def update_figure(self):
-        
-        if self.pdata.vertical is not 'z':       
-            try:
-                for coll in self.axes.collections:  
-                    self.axes.collections.remove(coll)  
-            except AttributeError: pass
-                
+        self.axes.cla()
+        if hasattr(self,'cb'): #remove colorbar
+                self.figure.delaxes(self.figure.axes[1])
+                self.figure.subplots_adjust(right=0.90)  #default right padding 
+        self.axes.set_aspect('auto')
+        if self.pdata.vertical is not 'z':                                  
             x=self.pdata.x
             y=self.pdata.y
             z=self.pdata.field_2d        
-            pc=self.axes.pcolormesh(x,y,z)
+            self.axes.pcolormesh(x,y,z)
             for ii in range(x.shape[self.pdata.i_vert]):
                 myline=Line2D(x[ii,:],y[ii,:],color='k')    
-                self.axes.add_line(myline) 
-                
-            self.axes.set_aspect('auto')
-            if hasattr(self,'cb'): #remove colorbar
-                self.figure.delaxes(self.figure.axes[1])
-                self.figure.subplots_adjust(right=0.90)  #default right padding
-            self.cb = self.figure.colorbar(pc) 
-                          
+                self.axes.add_line(myline)                          
         else:
             self.a=self.axes.contourf(self.pdata.field_2d,30) 
-            self.axes.set_aspect('auto')       
-            if hasattr(self,'cb'):
-                self.figure.delaxes(self.figure.axes[1])
-                self.figure.subplots_adjust(right=0.90)  #default right padding
-            self.cb = self.figure.colorbar(self.a)
-        self.reset_contour()           
+
+        self.cb = self.figure.colorbar(self.a)
+            
+        if self.pdata.show_contours:
+            self.reset_contour()  
+        self.draw()
+              
+    def reset_contour(self):   
+        # don't delete color contours when drawing contours
+        self.axes.hold(True)
+        # if the array is constant, don't contour
+        tt=np.abs(self.pdata.field_2d_c)
+        tt2=tt[~np.isnan(tt)]
+        if not np.all( tt2-np.max(tt2)==0. ):
+            self.cs=self.axes.contour(self.pdata.field_2d_c,colors='k')
+            self.cs.clabel()
+        self.axes.hold(False)       
 
 

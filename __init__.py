@@ -93,7 +93,7 @@ class slider_box(QtGui.QWidget):
                                
                 self.sliderlist[ii].myslider.setMinimum(0)
                 self.sliderlist[ii].myslider.setMaximum(int(tmp)-1)
-                self.sliderlist[ii].myslider.setValue(1)
+                self.sliderlist[ii].myslider.setValue(0)
                 self.sliderlist[ii].mylcd.display(myax.indices[ii])
                 self.sliderlist[ii].mylabel.setText(myax.get_dimname(ii))
                 self.sliderlist[ii].show()
@@ -163,6 +163,7 @@ class MainWidget(QtGui.QWidget):
     
     def pick_c_var(self,text):
         self.canvas.pdata.c_str=str(text)
+        self.canvas.pdata.update_c()
         self.canvas.update_figure()
                
     def toggle_contours(self,on):
@@ -170,8 +171,10 @@ class MainWidget(QtGui.QWidget):
             self.canvas.pdata.show_contours=True
         else: 
             self.canvas.pdata.show_contours=False
-        if self.canvas.pdata.c_str: self.canvas.update_figure()
-    
+        #if self.canvas.pdata.: self.canvas.update_figure()
+        self.canvas.pdata.update_c()
+        self.canvas.update_figure()
+        
     def slider_moved(self,index,active_dim):
         self.canvas.pdata.myax.indices[active_dim]=index
         self.canvas.pdata.update()  
@@ -237,15 +240,23 @@ class ApplicationWindow(QtGui.QMainWindow):
         openFile.triggered.connect(self.showDialog)
         
         #self.reader.open(fname)
-        #self.statusBar()
+        #self.statusBar()  
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(openFile)
         fileMenu.addAction(exitAction)
+        if len(sys.argv)>1:
+            print sys.argv[1]
+            self.cmdline_arg(sys.argv[1])
         
     def fileQuit(self):
         self.close()
-        
+    
+    def cmdline_arg(self,arg):
+        self.main_widget.canvas.pdata.reader.open(arg)
+        self.main_widget.setcombo1()
+        self.main_widget.pick_cf_var(self.main_widget.canvas.pdata.reader.keys_2d_variables[0])
+   
     def showDialog(self):
         fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file', 
                 '/home')
