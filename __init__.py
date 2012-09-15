@@ -94,7 +94,7 @@ class slider_box(QtGui.QWidget):
                 self.sliderlist[ii].myslider.setMinimum(0)
                 self.sliderlist[ii].myslider.setMaximum(int(tmp)-1)
                 self.sliderlist[ii].myslider.setValue(0)
-                self.sliderlist[ii].mylcd.display(myax.indices[ii])
+                self.sliderlist[ii].mylcd.display(myax.sl_inds[ii])
                 self.sliderlist[ii].mylabel.setText(myax.get_dimname(ii))
                 self.sliderlist[ii].show()
                 
@@ -176,7 +176,7 @@ class MainWidget(QtGui.QWidget):
         self.canvas.update_figure()
         
     def slider_moved(self,index,active_dim):
-        self.canvas.pdata.myax.indices[active_dim]=index
+        self.canvas.pdata.myax.sl_inds[active_dim]=index
         self.canvas.pdata.update()  
         self.canvas.update_figure()
  
@@ -212,7 +212,7 @@ class MainWidget(QtGui.QWidget):
             # set and connect sliders
         self.sliderbox.disconnect_all()
         self.sliderbox.setsliders(self.canvas.pdata.reader,self.canvas.pdata.myax)
-        for ii in range(len(self.canvas.pdata.myax.indices)):    
+        for ii in range(len(self.canvas.pdata.myax.sl_inds)):    
             self.sliderbox.sliderlist[ii].myslider.valueChanged.connect(self.sliderbox.sliderlist[ii].mylcd.display)
             self.sliderbox.sliderlist[ii].myslider.valueChanged.connect(fpartial(self.slider_moved,active_dim=ii))        
         self.buttons_horz.setbuttons(True,self.canvas.pdata.myax)
@@ -239,8 +239,6 @@ class ApplicationWindow(QtGui.QMainWindow):
             
         openFile.triggered.connect(self.showDialog)
         
-        #self.reader.open(fname)
-        #self.statusBar()  
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(openFile)
@@ -248,6 +246,13 @@ class ApplicationWindow(QtGui.QMainWindow):
         if len(sys.argv)>1:
             print sys.argv[1]
             self.cmdline_arg(sys.argv[1])
+        
+            
+        # choose nc file for debugging
+        debug=0
+        if debug:
+            ncfile='/ubuntu10.4_home/stefan/arbeit/him/run15/saves/save1.00e00.376.195.nc'
+            self.cmdline_arg(ncfile)
         
     def fileQuit(self):
         self.close()

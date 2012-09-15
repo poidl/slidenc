@@ -14,37 +14,32 @@ class myax():
     def __init__(self):
         self.dim_names=[]
         self.ndims=0
-        self.perm=[]       
-        self.indices_ini=[] 
-        self.indices=[]
+        self.perm=[] # permutation of dimensions      
+        self.sl_inds_ini=[] # initial slider indices
+        self.sl_inds=[] # slider indices
     
     def setax(self,reader,string):
         self.dim_names=reader.ff.variables[str(string)].dimensions
         self.ndims=len(self.dim_names)
         self.perm=range(self.ndims)        
-        self.indices_ini=[0]*(self.ndims-2) 
-        self.indices=self.indices_ini[:]
+        self.sl_inds_ini=[0]*(self.ndims-2) 
+        self.sl_inds=self.sl_inds_ini[:]
     def permute(self,ind,val):
         tmp=self.perm[:]
         self.perm[ind]=val
         self.perm[tmp.index(val)]=tmp[ind]
         self.perm[:ind]=sorted(self.perm[:ind])
-        self.indices=self.indices_ini[:]
+        self.sl_inds=self.sl_inds_ini[:]
         
     def get_dimname(self,ind):
         return self.dim_names[self.perm[ind]]
     
-    #def get_orig_ind(self,ind):
-        
-    
     def tup(self):
         li=[]; cnt=0
         for ii in range(self.ndims):
-            li.append('')
-        for ii in range(self.ndims):
             if self.perm.index(ii)>self.ndims-3:
-                li[ii]=slice(None)
-            else: li[ii]=self.indices[cnt];  cnt+=1 
+                li.append(slice(None))
+            else: li.append(self.sl_inds[cnt]);  cnt+=1 
         return tuple(li)
 
 class pdata:
@@ -64,8 +59,11 @@ class pdata:
         self.update_c()
             
     def update_cf(self):
+
         self.field_2d=self.reader.get_var(self.cf_str,self.myax.tup())   
-        tmp=self.myax.perm[-2:] 
+        tmp=self.myax.perm[-2:]  
+        
+        ####       
         self.flip=True if tmp[0]>tmp[1] else False
        
         li= [str(self.myax.dim_names[self.myax.perm[-1]]),
@@ -73,33 +71,40 @@ class pdata:
         if 'Interface' in li: self.vertical='Interface'
         elif 'Layer' in li: self.vertical='Layer'
         else: self.vertical='z'
-        if self.vertical is not 'z':       
+        if self.vertical is not 'z':
+            # read interface heights for plots against vertical axes 
             try: e=self.reader.get_var('e',self.myax.tup())
             except: 
                 try: e=self.reader.get_var('etm',self.myax.tup())
                 except: print 'No interface height found'
                 
-            i1=self.myax.tup().index(slice(None))
-            i2=self.myax.tup().index(slice(None),i1+1)
-            self.i_vert=self.myax.dim_names.index(self.vertical)
-            if i1==self.i_vert: 
-                self.i_vert=0; i2=1
-            else: i2=0; self.i_vert=1
+            # ivert is the vertical index in the 2d-field (0 or 1)    
+            i1,i2=sorted(self.myax.perm[-2:])
+            self.ivert=[i1,i2].index( self.myax.dim_names.index(self.vertical) )
+            self.inonvert=1 if self.ivert==0 else 0
+            print 'ivert:    '+str(self.ivert)
+            print 'self.inonvert: '+str(self.inonvert)
             
-            x1=np.arange(e.shape[i2])
-            x1=np.r_[[x1]*e.shape[self.i_vert]]
-            if self.cf_str is  'e':
-                c=np.ones((e.shape[i2]))
-                c=np.r_[[ii*c for ii in range(e.shape[self.i_vert]-1)]]
-                self.field_2d=c  
+            # x1 holds the non-vertical coordinate
+            x1=np.arange(e.shape[self.inonvert])
+            x1=np.r_[[x1]*e.shape[self.ivert]]
+            #print x1.shape
+            if self.ivert>self.inonvert:
+                x1=x1.transpose()
                 
-            if self.flip==True:
-                self.x=e
-                self.y=x1
-            else:
-                self.x=x1
-                self.y=e
-                             
+            if self.cf_str is 'e':
+                # color indicates number of layer
+                c=np.ones((e.shape[self.inonvert]))
+                c=np.r_[[ii*c for ii in range(e.shape[self.ivert]-1)]]
+                self.field_2d=c
+                  
+            if (self.flip==True and self.ivert<=self.inonvert): 
+                (self.x,self.y) = (e,x1) 
+            elif (self.flip==False and self.ivert>self.inonvert):
+                (self.x,self.y) = (e,x1)
+            else: (self.x,self.y) =(x1,e)
+        
+                              
         else:    
             print self.cf_str  
             #self.field_2d=self.reader.get_var(self.cf_str,self.myax.tup())   
@@ -138,11 +143,15 @@ class MyStaticMplCanvas(MyMplCanvas):
         if self.pdata.vertical is not 'z':                                  
             x=self.pdata.x
             y=self.pdata.y
-            z=self.pdata.field_2d        
+            z=self.pdata.field_2d 
+            print x.shape
+            print y.shape
+            print z.shape
             self.axes.pcolormesh(x,y,z)
-            for ii in range(x.shape[self.pdata.i_vert]):
+            for ii in range(x.shape[0]):
                 myline=Line2D(x[ii,:],y[ii,:],color='k')    
-                self.axes.add_line(myline)                          
+                self.axes.add_line(myline) 
+                                                 
         else:
             self.a=self.axes.contourf(self.pdata.field_2d,30) 
 
