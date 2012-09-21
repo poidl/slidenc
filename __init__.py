@@ -85,11 +85,6 @@ class slider_box(QtGui.QWidget):
             for ii in self.sliderlist: ii.hide()
             for ii in range(myax.ndims-2):
                 tmp=len(reader.ff.dimensions[myax.get_dimname(ii)])
-                ### using Scientific.IO.NetCDF
-                #tmp=reader.ff.dimensions[myax.get_dimname(ii)]
-                #if tmp==None: #unlimited dimension
-                #    tmp=reader.get_current_time_dimension()
-                #    print type(tmp)
                                
                 self.sliderlist[ii].myslider.setMinimum(0)
                 self.sliderlist[ii].myslider.setMaximum(int(tmp)-1)
@@ -156,7 +151,6 @@ class MainWidget(QtGui.QWidget):
     def pick_cf_var(self,text):
         # arrange sliders, buttons and contour variables
         self.new_ax(text) 
-        # update figure
         self.canvas.pdata.cf_str=str(text)
         self.canvas.pdata.update()
         self.canvas.update_figure()
@@ -171,7 +165,6 @@ class MainWidget(QtGui.QWidget):
             self.canvas.pdata.show_contours=True
         else: 
             self.canvas.pdata.show_contours=False
-        #if self.canvas.pdata.: self.canvas.update_figure()
         self.canvas.pdata.update_c()
         self.canvas.update_figure()
         
@@ -236,26 +229,35 @@ class ApplicationWindow(QtGui.QMainWindow):
         openFile = QtGui.QAction(QtGui.QIcon('open.png'), 'Open', self)
         openFile.setShortcut('Ctrl+O')
         openFile.setStatusTip('Open new File')
-            
         openFile.triggered.connect(self.showDialog)
+        
+        reloadFile = QtGui.QAction(QtGui.QIcon('reload.png'), 'Reload', self)
+        reloadFile.setShortcut('Ctrl+R')
+        reloadFile.setStatusTip('Reload File')      
+        reloadFile.triggered.connect(self.fileReload)
         
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(openFile)
+        fileMenu.addAction(reloadFile)
         fileMenu.addAction(exitAction)
-        if len(sys.argv)>1:
-            print sys.argv[1]
-            self.cmdline_arg(sys.argv[1])
         
-            
+        # start from command line with filename as argument 
+        if len(sys.argv)>1:
+            self.cmdline_arg(sys.argv[1])
+                
         # choose nc file for debugging
-        debug=0
+        debug=1
         if debug:
             ncfile='/ubuntu10.4_home/stefan/arbeit/him/run15/saves/save1.00e00.376.195.nc'
             self.cmdline_arg(ncfile)
         
     def fileQuit(self):
         self.close()
+    
+    def fileReload(self):
+        fname=self.main_widget.canvas.pdata.reader.fname
+        self.cmdline_arg(fname)
     
     def cmdline_arg(self,arg):
         self.main_widget.canvas.pdata.reader.open(arg)
@@ -267,7 +269,6 @@ class ApplicationWindow(QtGui.QMainWindow):
                 '/home')
         self.main_widget.canvas.pdata.reader.open(fname)
         self.main_widget.setcombo1()
-        #self.main_widget.mw_connect()
         self.main_widget.pick_cf_var(self.main_widget.canvas.pdata.reader.keys_2d_variables[0])
 
     def closeEvent(self, ce):

@@ -62,9 +62,11 @@ class pdata:
 
         self.field_2d=self.reader.get_var(self.cf_str,self.myax.tup())   
         tmp=self.myax.perm[-2:]  
-        
-        ####       
+   
         self.flip=True if tmp[0]>tmp[1] else False
+        
+        #self.z_const=0
+        #if self.z_const
        
         li= [str(self.myax.dim_names[self.myax.perm[-1]]),
              str(self.myax.dim_names[self.myax.perm[-2]])]
@@ -76,19 +78,16 @@ class pdata:
             try: e=self.reader.get_var('e',self.myax.tup())
             except: 
                 try: e=self.reader.get_var('etm',self.myax.tup())
-                except: print 'No interface height found'
+                except:  'No interface height found'
                 
             # ivert is the vertical index in the 2d-field (0 or 1)    
             i1,i2=sorted(self.myax.perm[-2:])
             self.ivert=[i1,i2].index( self.myax.dim_names.index(self.vertical) )
             self.inonvert=1 if self.ivert==0 else 0
-            print 'ivert:    '+str(self.ivert)
-            print 'self.inonvert: '+str(self.inonvert)
             
             # x1 holds the non-vertical coordinate
             x1=np.arange(e.shape[self.inonvert])
             x1=np.r_[[x1]*e.shape[self.ivert]]
-            #print x1.shape
             if self.ivert>self.inonvert:
                 x1=x1.transpose()
                 
@@ -97,17 +96,12 @@ class pdata:
                 c=np.ones((e.shape[self.inonvert]))
                 c=np.r_[[ii*c for ii in range(e.shape[self.ivert]-1)]]
                 self.field_2d=c
-                  
-            if (self.flip==True and self.ivert<=self.inonvert): 
-                (self.x,self.y) = (e,x1) 
-            elif (self.flip==False and self.ivert>self.inonvert):
+                
+            if np.logical_xor( self.flip==True, self.ivert>self.inonvert ):      
                 (self.x,self.y) = (e,x1)
-            else: (self.x,self.y) =(x1,e)
-        
+            else: (self.x,self.y) =(x1,e)      
                               
-        else:    
-            print self.cf_str  
-            #self.field_2d=self.reader.get_var(self.cf_str,self.myax.tup())   
+        else:      
             if self.flip==True: 
                 self.field_2d=np.transpose(self.field_2d);
                 
@@ -140,16 +134,15 @@ class MyStaticMplCanvas(MyMplCanvas):
                 self.figure.delaxes(self.figure.axes[1])
                 self.figure.subplots_adjust(right=0.90)  #default right padding 
         self.axes.set_aspect('auto')
-        if self.pdata.vertical is not 'z':                                  
+        if self.pdata.vertical is not 'z':                                 
             x=self.pdata.x
             y=self.pdata.y
             z=self.pdata.field_2d 
-            print x.shape
-            print y.shape
-            print z.shape
             self.axes.pcolormesh(x,y,z)
+            if self.pdata.ivert>self.pdata.inonvert: 
+                x=x.transpose(); y=y.transpose() 
             for ii in range(x.shape[0]):
-                myline=Line2D(x[ii,:],y[ii,:],color='k')    
+                myline=Line2D(x[ii,:],y[ii,:],color='k')       
                 self.axes.add_line(myline) 
                                                  
         else:
