@@ -247,7 +247,7 @@ class ApplicationWindow(QtGui.QMainWindow):
             self.cmdline_arg(sys.argv[1])
                 
         # choose nc file for debugging
-        debug=1
+        debug=0
         if debug:
             ncfile='/ubuntu10.4_home/stefan/arbeit/him/run15/saves/save1.00e00.376.195.nc'
             self.cmdline_arg(ncfile)

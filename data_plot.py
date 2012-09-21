@@ -65,8 +65,9 @@ class pdata:
    
         self.flip=True if tmp[0]>tmp[1] else False
         
-        #self.z_const=0
-        #if self.z_const
+        #self.z_const=1
+        #if self.z_const==1:
+            
        
         li= [str(self.myax.dim_names[self.myax.perm[-1]]),
              str(self.myax.dim_names[self.myax.perm[-2]])]
