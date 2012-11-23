@@ -12,18 +12,41 @@ import defaultReader
 ndims_max=5
 class myax():
     def __init__(self):
+        self.reader=defaultReader.reader()
         self.dim_names=[]
+        self.dim_vals=[]
         self.ndims=0
-        self.perm=[] # permutation of dimensions      
+        self.perm=[] # permutation of dimensions
+        self.flip=[] # boolean array: if true, flip dimension 
+        self.coords=[]  
         self.sl_inds_ini=[] # initial slider indices
         self.sl_inds=[] # slider indices
+        self.vertaxEnableChoices='False'
     
-    def setax(self,reader,string):
-        self.dim_names=reader.ff.variables[str(string)].dimensions
+    
+    def setax(self,varname):
+        self.dim_names=self.reader.ff.variables[str(varname)].dimensions
+        if self.reader.vertaxType(varname)=='him':
+            self.vertaxEnableChoices='True'
+            
         self.ndims=len(self.dim_names)
-        self.perm=range(self.ndims)        
+        self.perm=range(self.ndims)  
+        self.flip=[False]*self.ndims
+        self.coords=['dim']*self.ndims     
         self.sl_inds_ini=[0]*(self.ndims-2) 
         self.sl_inds=self.sl_inds_ini[:]
+        self.dim_vals=[]
+        self.dim_inds=[]
+        for ii in range(self.ndims):
+            dn=self.dim_names[ii]
+            # is the dimension also a variable? If not, set dim_vals
+            # to the grid indices
+            tmp=np.arange(len(self.reader.ff.dimensions[dn]))
+            self.dim_inds.append(tmp)
+            if dn in self.reader.ff.variables.keys():
+                tmp=self.reader.ff.variables[dn][:]
+            self.dim_vals.append(tmp)
+            
     def permute(self,ind,val):
         tmp=self.perm[:]
         self.perm[ind]=val
@@ -34,6 +57,10 @@ class myax():
     def get_dimname(self,ind):
         return self.dim_names[self.perm[ind]]
     
+    def get_dim(self,ind):
+        # modify
+        return len(self.reader.ff.dimensions[self.get_dimname(ind)])
+    
     def tup(self):
         li=[]; cnt=0
         for ii in range(self.ndims):
@@ -41,14 +68,28 @@ class myax():
                 li.append(slice(None))
             else: li.append(self.sl_inds[cnt]);  cnt+=1 
         return tuple(li)
+    
+    def get_var(self,cf_str):
+        return self.reader.get_var(cf_str,self.tup())
+    
+    def keys_2d_variables(self):
+        return self.reader.keys_2d_variables
+    
+    def get_combo2_vars(self,dn1):
+        return self.reader.get_combo2_vars(dn1)
+    
+    def fname(self):
+        return self.reader.fname
+    
+    def open(self,arg):
+        return self.reader.open(arg)
 
 class pdata:
-    def __init__(self):
-        self.reader=defaultReader.reader()
+    def __init__(self,myax):
         self.cf_str=''
         self.c_str=''
-        self.myax=myax()
-        self.flip=False
+        self.myax=myax
+        self.transp=False
         self.show_contours=False
         self.field_2d=np.nan
         self.field_2d_c=np.nan
@@ -60,14 +101,10 @@ class pdata:
             
     def update_cf(self):
 
-        self.field_2d=self.reader.get_var(self.cf_str,self.myax.tup())   
+        self.field_2d=self.myax.get_var(self.cf_str)   
         tmp=self.myax.perm[-2:]  
-   
-        self.flip=True if tmp[0]>tmp[1] else False
-        
-        #self.z_const=1
-        #if self.z_const==1:
-            
+        d1,d2=sorted(tmp)
+        self.transp=True if tmp[0]>tmp[1] else False
        
         li= [str(self.myax.dim_names[self.myax.perm[-1]]),
              str(self.myax.dim_names[self.myax.perm[-2]])]
@@ -76,15 +113,15 @@ class pdata:
         else: self.vertical='z'
         if self.vertical is not 'z':
             # read interface heights for plots against vertical axes 
-            try: e=self.reader.get_var('e',self.myax.tup())
+            try: e=self.myax.get_var('e')
             except: 
-                try: e=self.reader.get_var('etm',self.myax.tup())
+                try: e=self.myax.get_var('etm')
                 except:  'No interface height found'
-                
-            # ivert is the vertical index in the 2d-field (0 or 1)    
-            i1,i2=sorted(self.myax.perm[-2:])
-            self.ivert=[i1,i2].index( self.myax.dim_names.index(self.vertical) )
-            self.inonvert=1 if self.ivert==0 else 0
+                    
+            
+            self.ivert=[d1,d2].index( self.myax.dim_names.index(self.vertical) )
+            self.inonvert = not self.ivert
+            
             
             # x1 holds the non-vertical coordinate
             x1=np.arange(e.shape[self.inonvert])
@@ -98,23 +135,39 @@ class pdata:
                 c=np.r_[[ii*c for ii in range(e.shape[self.ivert]-1)]]
                 self.field_2d=c
                 
-            if np.logical_xor( self.flip==True, self.ivert>self.inonvert ):      
+            if np.logical_xor( self.transp==True, self.ivert>self.inonvert ):      
                 (self.x,self.y) = (e,x1)
             else: (self.x,self.y) =(x1,e)      
                               
-        else:      
-            if self.flip==True: 
+        else:     
+            if self.transp==True: 
                 self.field_2d=np.transpose(self.field_2d);
+                d1,d2=d2,d1
+        
+            if self.myax.coords[d1]=='dim':
+                self.y=self.myax.dim_vals[d1]
+            elif self.myax.coords[d1]=='grd':
+                self.y=self.myax.dim_inds[d1]
                 
+            if self.myax.coords[d2]=='dim':
+                self.x=self.myax.dim_vals[d2]
+            elif self.myax.coords[d2]=='grd':
+                self.x=self.myax.dim_inds[d2]   
+            
+            
+            #self.y=self.myax.dim_inds[d1]
+            #self.x=self.myax.dim_inds[d2]
+               
     def update_c(self):
-        self.field_2d_c=self.reader.get_var(self.c_str,self.myax.tup())    
-        if self.flip==True: 
+        #print self.c_str
+        self.field_2d_c=self.myax.get_var(self.c_str)    
+        if self.transp==True: 
             self.field_2d_c=np.transpose(self.field_2d_c);
         
 class MyMplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
-    def __init__(self,reader=None,show_contours=False,parent=None, width=5, height=4, dpi=100):
-        self.pdata=pdata()
+    def __init__(self,myax,show_contours=False,parent=None, width=5, height=4, dpi=100):
+        self.pdata=pdata(myax)
         fig=Figure()
         self.axes = fig.add_subplot(111)        
         self.axes.hold(False)       
@@ -127,18 +180,21 @@ class MyMplCanvas(FigureCanvas):
         
         FigureCanvas.updateGeometry(self)
 
-class MyStaticMplCanvas(MyMplCanvas):    
+class MyStaticMplCanvas(MyMplCanvas): 
+    def __init__(self,myax):   
+        MyMplCanvas.__init__(self,myax)
         
     def update_figure(self):
         self.axes.cla()
         if hasattr(self,'cb'): #remove colorbar
                 self.figure.delaxes(self.figure.axes[1])
-                self.figure.subplots_adjust(right=0.90)  #default right padding 
+                self.figure.subplots_adjust(right=0.90) 
         self.axes.set_aspect('auto')
-        if self.pdata.vertical is not 'z':                                 
-            x=self.pdata.x
-            y=self.pdata.y
-            z=self.pdata.field_2d 
+        x=self.pdata.x
+        y=self.pdata.y
+        #print y
+        z=self.pdata.field_2d
+        if self.pdata.vertical is not 'z':                                  
             self.axes.pcolormesh(x,y,z)
             if self.pdata.ivert>self.pdata.inonvert: 
                 x=x.transpose(); y=y.transpose() 
@@ -147,8 +203,22 @@ class MyStaticMplCanvas(MyMplCanvas):
                 self.axes.add_line(myline) 
                                                  
         else:
-            self.a=self.axes.contourf(self.pdata.field_2d,30) 
-
+            self.a=self.axes.contourf(x,y,z,30)
+            
+        #flip plot along a dimension?
+        tmp=self.pdata.myax.perm[-2:]            
+        d1=min(tmp)
+        d2=max(tmp)
+        if self.pdata.transp==True:
+            d1,d2=d2,d1
+        xflipped=self.axes.get_xlim()[0]>self.axes.get_xlim()[1]
+        yflipped=self.axes.get_ylim()[0]>self.axes.get_ylim()[1]
+        if np.logical_xor(self.pdata.myax.flip[d1],yflipped):
+            self.axes.invert_yaxis()
+        if np.logical_xor(self.pdata.myax.flip[d2],xflipped):
+            self.axes.invert_xaxis()
+           
+           
         self.cb = self.figure.colorbar(self.a)
             
         if self.pdata.show_contours:
@@ -159,10 +229,13 @@ class MyStaticMplCanvas(MyMplCanvas):
         # don't delete color contours when drawing contours
         self.axes.hold(True)
         # if the array is constant, don't contour
-        tt=np.abs(self.pdata.field_2d_c)
+        x=self.pdata.x
+        y=self.pdata.y
+        z=self.pdata.field_2d_c
+        tt=np.abs(z)
         tt2=tt[~np.isnan(tt)]
         if not np.all( tt2-np.max(tt2)==0. ):
-            self.cs=self.axes.contour(self.pdata.field_2d_c,colors='k')
+            self.cs=self.axes.contour(x,y,z,colors='k')
             self.cs.clabel()
         self.axes.hold(False)       
 

@@ -36,13 +36,23 @@ class reader:
             va=np.zeros(np.shape(va));    
         return va 
             
-    def get_combo2_vars(self,dn1): 
-        varlist=[]
-        for ii in self.ff.variables.keys():
-            dn2=self.ff.variables[ii].dimensions
-            if dn1==dn2:
-                varlist.append(ii)
+    def get_combo2_vars(self,dn1):
+        # isg: ignore staggered grid
+        isg=0 
+        if isg==1:
+            varlist=self.keys_2d_variables
+        else:
+            varlist=[]
+            for ii in self.ff.variables.keys():
+                dn2=self.ff.variables[ii].dimensions
+                if dn1==dn2:
+                    varlist.append(ii) 
         return varlist
+    
+    def vertaxType(self,string):
+        dn=self.ff.variables[str(string)].dimensions
+        if 'Interface' in dn: return 'him'
+        elif 'Layer' in dn: return 'him'
             
  
     
