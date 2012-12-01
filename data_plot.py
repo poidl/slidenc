@@ -93,7 +93,8 @@ class pdata:
         self.show_contours=False
         self.field_2d=np.nan
         self.field_2d_c=np.nan
-        self.vertical=''
+        self.vertical_dimname=''
+        self.vertical_trafo=False
 
     def update(self):
         self.update_cf()
@@ -108,23 +109,51 @@ class pdata:
        
         li= [str(self.myax.dim_names[self.myax.perm[-1]]),
              str(self.myax.dim_names[self.myax.perm[-2]])]
-        if 'Interface' in li: self.vertical='Interface'
-        elif 'Layer' in li: self.vertical='Layer'
-        else: self.vertical='z'
-        if self.vertical is not 'z':
+        if 'Interface' in li: 
+            self.vertical_dimname='Interface'
+            self.vertical_trafo=True
+        elif 'Layer' in li: 
+            self.vertical_dimname='Layer'
+            self.vertical_trafo=True
+        else: 
+            self.vertical='z'
+            self.vertical_trafo=False
+            
+        if self.vertical_trafo is True:
             # read interface heights for plots against vertical axes 
             try: e=self.myax.get_var('e')
             except: 
                 try: e=self.myax.get_var('etm')
                 except:  'No interface height found'
                     
-            
-            self.ivert=[d1,d2].index( self.myax.dim_names.index(self.vertical) )
+            #get the axis of the 2d-slice along which to transform
+            self.ivert=[d1,d2].index( self.myax.dim_names.index(self.vertical_dimname) )
             self.inonvert = not self.ivert
             
+            def regrid_vertcoord(e):
+                #assume that the variable is horz. velocity 
+                #of HIM 
+                if self.ivert==0: 
+                    e=np.c_[e[:,0],0.5*(e[:,:-1]+e[:,1:]),e[:,-1]]
+                return e
+                                
             
+            #if the vertical coordinate is defined on a different
+            #horizontal grid as the variable to plot, do this:
+            if self.field_2d.shape[self.inonvert] != e.shape[self.inonvert]:
+                e=regrid_vertcoord(e)
+            
+            ivert_full=[d1,d2][self.ivert]    
+            if self.myax.coords[ivert_full]=='grd':
+                e,tr=np.meshgrid(range(e.shape[self.ivert]),range(e.shape[self.inonvert]))
+                if self.ivert<=self.inonvert:
+                    e=e.transpose()         
+            inonvert_full=[d1,d2][self.inonvert]
             # x1 holds the non-vertical coordinate
-            x1=np.arange(e.shape[self.inonvert])
+            if self.myax.coords[inonvert_full]=='dim':
+                x1=self.myax.dim_vals[inonvert_full]
+            elif self.myax.coords[inonvert_full]=='grd':        
+                x1=self.myax.dim_inds[inonvert_full]
             x1=np.r_[[x1]*e.shape[self.ivert]]
             if self.ivert>self.inonvert:
                 x1=x1.transpose()
@@ -160,9 +189,10 @@ class pdata:
                
     def update_c(self):
         #print self.c_str
-        self.field_2d_c=self.myax.get_var(self.c_str)    
-        if self.transp==True: 
-            self.field_2d_c=np.transpose(self.field_2d_c);
+        self.field_2d_c=self.myax.get_var(self.c_str)
+        if self.vertical_trafo is False:
+            if self.transp==True: 
+                self.field_2d_c=np.transpose(self.field_2d_c);
         
 class MyMplCanvas(FigureCanvas):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
@@ -194,8 +224,18 @@ class MyStaticMplCanvas(MyMplCanvas):
         y=self.pdata.y
         #print y
         z=self.pdata.field_2d
-        if self.pdata.vertical is not 'z':                                  
-            self.axes.pcolormesh(x,y,z)
+        if self.pdata.vertical_trafo is True:
+        #if 1:
+            print x.shape
+            print y.shape
+            print z.shape
+#            x=x[1:,:]
+#            y=y[1:,:]
+#            z=z[:,1:] 
+
+            self.axes.pcolormesh(x,y,z)  
+            #self.axes.contourf(x,y,z)                               
+            #self.axes.pcolormesh(x,y,z,shading='gouraud')
             if self.pdata.ivert>self.pdata.inonvert: 
                 x=x.transpose(); y=y.transpose() 
             for ii in range(x.shape[0]):
@@ -228,14 +268,34 @@ class MyStaticMplCanvas(MyMplCanvas):
     def reset_contour(self):   
         # don't delete color contours when drawing contours
         self.axes.hold(True)
-        # if the array is constant, don't contour
         x=self.pdata.x
         y=self.pdata.y
         z=self.pdata.field_2d_c
+        
+        print x.shape
+        print y.shape
+        print z.shape
+        
         tt=np.abs(z)
         tt2=tt[~np.isnan(tt)]
+        # if the array is constant, don't contour
         if not np.all( tt2-np.max(tt2)==0. ):
+            if self.pdata.vertical_trafo is True:
+                if hasattr(self.pdata,'ivert'):
+                    print self.pdata.ivert  
+                    if self.pdata.ivert is 0:
+                        x=0.5*(x[:-1,:]+x[1:,:])
+                        y=0.5*(y[:-1,:]+y[1:,:])
+                    else:
+                        #x=x[:,1:]
+                        #y=y[:,1:]
+                        x=0.5*(x[:,:-1]+x[:,1:])
+                        y=0.5*(y[:,:-1]+y[:,1:])
+                print x.shape
+                print y.shape
+                print z.shape
             self.cs=self.axes.contour(x,y,z,colors='k')
+            
             self.cs.clabel()
         self.axes.hold(False)       
 

@@ -441,8 +441,10 @@ class ApplicationWindow(QtGui.QMainWindow):
         # choose nc file for debugging
         debug=1
         if debug:
-            #ncfile='/ubuntu10.4_home/stefan/arbeit/him/run15/saves/save1.00e00.376.195.nc'
-            ncfile='/home/stefan/arbeit/data/WOA09/salinity_annual_1deg.nc'
+            ncfile='/ubuntu10.4_home/stefan/arbeit/him/run15/saves/save1.00e00.376.195.nc'
+            ncfile='/ubuntu10.4_home/stefan/arbeit/him/run16/saves/save1.00e00.376.195.nc'
+            
+            #ncfile='/home/stefan/arbeit/data/WOA09/salinity_annual_1deg.nc'
             self.openfile(ncfile)
         
     def fileQuit(self):
