@@ -454,7 +454,7 @@ class ApplicationWindow(QtGui.QMainWindow):
             self.openfile(sys.argv[1])
                 
         # choose nc file for debugging
-        debug=1
+        debug=0
         if debug:
             ncfile='/ubuntu10.4_home/stefan/arbeit/him/run15/saves/save1.00e00.376.195.nc'
             ncfile='/ubuntu10.4_home/stefan/arbeit/him/run16/saves/save1.00e00.376.195.nc'
