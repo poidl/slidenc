@@ -22,7 +22,7 @@ in a terminal
 
 Stefan Riha  hoitaus@gmail.com
 
-https://d2weczhvl823v0.cloudfront.net/poidl/slidenc/trend.png
+![bitdeli badge](https://d2weczhvl823v0.cloudfront.net/poidl/slidenc/trend.png)
 
 
 
