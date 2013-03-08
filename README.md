@@ -16,7 +16,9 @@ Dependencies: python, pyqt4, numpy, matplotlib, netCDF4
 Usage: 
 
 Start the program by changing into the slidenc folder and typing
+
 	python __init__.py
+	
 in a terminal
 
 
