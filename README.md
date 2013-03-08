@@ -24,8 +24,6 @@ in a terminal
 
 Stefan Riha  hoitaus@gmail.com
 
-![bitdeli badge](https://d2weczhvl823v0.cloudfront.net/poidl/slidenc/trend.png)
-
 
 
 
