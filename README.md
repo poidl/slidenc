@@ -30,3 +30,7 @@ Stefan Riha  hoitaus@gmail.com
 
 
 
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/poidl/slidenc/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
