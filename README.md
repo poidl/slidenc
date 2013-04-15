@@ -24,8 +24,6 @@ in a terminal
 
 Stefan Riha  hoitaus@gmail.com
 
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/f60ca5536d195730c668b881179841b4 "githalytics.com")](http://githalytics.com/poidl/slidenc)
 
-
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/poidl/slidenc/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
