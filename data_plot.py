@@ -235,7 +235,10 @@ class MyStaticMplCanvas(MyMplCanvas):
         self.axes.cla()
         if hasattr(self,'cb'): #remove colorbar
                 self.figure.delaxes(self.figure.axes[1])
-                self.figure.subplots_adjust(right=0.90) 
+                self.figure.delaxes(self.figure.axes[0])
+                self.axes=self.figure.add_subplot(111) 
+                #self.figure.delaxes(self.figure.axes[1])
+                #self.figure.subplots_adjust(right=0.90)        
         self.axes.set_aspect('auto')
         x=self.pdata.x
         y=self.pdata.y
