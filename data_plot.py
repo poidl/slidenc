@@ -147,10 +147,13 @@ class MyMplCanvas(FigureCanvas):
 class MyStaticMplCanvas(MyMplCanvas):    
         
     def update_figure(self):
-        self.axes.cla()
+        self.axes.cla() 
         if hasattr(self,'cb'): #remove colorbar
                 self.figure.delaxes(self.figure.axes[1])
-                self.figure.subplots_adjust(right=0.90)  #default right padding 
+                self.figure.delaxes(self.figure.axes[0])
+                self.axes=self.figure.add_subplot(111) 
+                #self.figure.delaxes(self.figure.axes[1])
+                #self.figure.subplots_adjust(right=0.90)                
         self.axes.set_aspect('auto')
         if self.pdata.vertical is not 'z':                                 
             x=self.pdata.x
