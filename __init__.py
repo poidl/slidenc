@@ -1,6 +1,6 @@
 #################################################################
 # slidenc is a data visualization tool
-# Copyright (C) 2011,2012  Stefan Riha
+# Copyright (C) 2011-2013  Stefan Riha
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
