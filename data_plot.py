@@ -55,9 +55,9 @@ class myax():
         self.dim_vals=[]
         self.dim_inds=[]
         for ii in range(self.ndims):
+            # myax.dim_vals are the values of the dimensional axis of a variable.
+            # if the dimensions themselves are not variables, use grid axis
             dn=self.dim_names[ii]
-            # is the dimension also a variable? If not, set dim_vals
-            # to the grid indices
             tmp=np.arange(len(self.reader.ff.dimensions[dn]))
             self.dim_inds.append(tmp)
             if dn in self.reader.ff.variables.keys():
