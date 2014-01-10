@@ -61,24 +61,23 @@ class myreader:
 #        self.model=''
         self.ncr=ncreader(string)
         self.ncvars=self.ncr.vars() # tuple
-#        self.dims=[]
         self.zcoord_trafo_available=False
         self.zcoord_native=''
         self.zcoord_added=''
         self.zcoord_active=''
         
     def set_var(self,string):
-        self.var=string
-        if self.var not in self.ncvars:
+        self.varname=string
+        if self.varname not in self.ncvars:
             print 'variable \''+string+'\' not in netcdf file'
             return
         self.__ncread_vardata()
         self.__guess_trafo() 
 
     def __ncread_vardata(self):
-        self.ncdims=self.ncr.vardims(self.var)
-        self.ncshape=self.ncr.varshape(self.var)
-        self.ncshape_phys=self.ncr.varshape_phys(self.var)
+        self.ncdims=self.ncr.vardims(self.varname)
+        self.ncshape=self.ncr.varshape(self.varname)
+        self.ncshape_phys=self.ncr.varshape_phys(self.varname)
         
     def __guess_trafo(self):
         magicdim='Layer'
@@ -88,7 +87,9 @@ class myreader:
                 self.zcoord_trafo_available=True
                 self.zcoord_native=magicdim
                 self.zcoord_added='z'
-                self.zcoord_active=self.zcoord_native
+                self.zcoord_active='native'
+                self.zcoord_index=self.ncdims.index(magicdim)
+                self.zcoord_trafovarname='e'
 
     def set_zcoord_active(self,string):
         if string not in ['native','added']:
@@ -99,12 +100,79 @@ class myreader:
             print 'No coordinate transformation available.'
             return        
         elif string=='native':
-            self.zcoord_active=self.zcoord_native
+            self.zcoord_active='native'
         elif string=='added': 
-            self.zcoord_active=self.zcoord_added
+            self.zcoord_active='added'
+            
+#    def get_slice(self,tup):
+#        if self.zcoord_trafo_available is False:
+#            va=self.ncr.varread(self.varname,tup)
+#        else:
+#            if self.zcoord_active=='native':
+#                va=self.ncr.varread(self.varname,tup)
+#            if self.zcoord_active=='added':
+#                va=self.__regrid(tup)
+#        return va
 
+#    def __regrid(self,tup):
+#        izc=self.zcoord_index
+#        ncdims2=self.ncr.vardims(self.zcoord_trafovarname) 
+#        # check for staggered grid
+#        staggered=[i==j for i,j in zip(self.ncdims,ncdims2)]
+#        
+#        
+#        self.ncdims=self.ncr.vardims(self.varname)
+#        islice = [i for i, x in enumerate(tup) if x == slice(None)]
+#        dimslice=[self.ncdims[i] for i in islice]
+#        if izc in islice:
+#            dim2=dimslice[islice.index(izc)-1] #non-vertical dim
+#            print dim2
+#            #data=self.ncr.varread(self.varname,tup)
+#            #if self.modelguess='him'
+#    
+    
+    def _get_staggervec(self,var1name,var2name):
+        #0:--- 1:- - -  (-1): - - - (2):- - - (-2): - - -  (99): none of the above
+        #  xxx    x x x      x x x       x x       x x x x     
+        ncdims1=self.ncr.vardims(var1name)
+        ncdims2=self.ncr.vardims(var2name)
+        staggered=[i!=j for i,j in zip(ncdims1,ncdims2)]
+        print staggered
+        for i in range(len(staggered)):
+            if staggered[i]:
+                start=self.ncr.ncf.variables[ncdims1[i]][:2]
+                end=self.ncr.ncf.variables[ncdims1[i]][-2:]
+                v1=np.concatenate([start,end])
+                start=self.ncr.ncf.variables[ncdims2[i]][:2]
+                end=self.ncr.ncf.variables[ncdims2[i]][-2:]
+                v2=np.concatenate([start,end])
+                if v1[0]<v2[0] and v2[0]<v1[1]:
+                    if v2[-2]<v1[-1] and v1[-1]<v2[-1]:
+                        staggered[i]=1
+                    elif v1[-2]<v2[-1] and v2[-1]<v1[-1]:
+                        staggered[i]=2
+                    else:
+                        staggered[i]=99
+                elif v2[0]<v1[0] and v1[0]<v2[1]:
+                    if v1[-2]<v2[-1] and v2[-1]<v1[-1]:
+                        staggered[i]=-1
+                    elif v2[-2]<v1[-1] and v1[-1]<v2[-1]:
+                        staggered[i]=-2
+                    else:
+                        staggered[i]=99 
+                else:
+                    staggered[i]=99
+            else:
+                staggered[i]=0
                 
-        
+        return staggered
+                 
+  
+         
+         
+                 
+            
+#                z=self.ncr.varread(self.zcoord_trafovarname,tup) 
             
         
         

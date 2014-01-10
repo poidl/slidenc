@@ -19,10 +19,32 @@ print r.vars()
 print r.dimlims()
 print r.vardims('u')
 print r.varshape_phys('u')
+tup=(slice(None))
+print r.varread('lonh',tup)
+
+
 
 rr=reader.myreader(fname)
 rr.set_var('u')
+
+print rr.modelguess
+print rr.varname
+print rr.zcoord_trafo_available
+rr.set_zcoord_active('added')
+print rr.zcoord_active
+tup=( slice(None), slice(None),1,1)
+
+f = NF(str(fname), 'r')
+b=range(-2,2)
+gr=f.variables['lonh'][:]
+
+print rr._get_staggervec('u','e')
+
+
+#print rr.get_slice(tup)
+
+
 #rr.set_zcoord_active('added')
-rr.
+
 #print rr.dims
 #print rr.shape_phys
