@@ -13,14 +13,13 @@ print dir(ds.dimensions['lath'])
 r=reader.ncreader(fname)
 
 print r.ncfname
-print r.ncf
-print r.dims()
+
 print r.vars()
 print r.dimlims()
 print r.vardims('u')
 print r.varshape_phys('u')
-tup=(slice(None))
-print r.varread('lonh',tup)
+#tup=(slice(None))
+#print r.varread('lonh',tup)
 
 
 
@@ -32,16 +31,14 @@ print rr.varname
 print rr.zcoord_trafo_available
 rr.set_zcoord_active('added')
 print rr.zcoord_active
-tup=( slice(None), slice(None),1,1)
+tup=( 1,slice(None), 1,slice(None))
 
-f = NF(str(fname), 'r')
-b=range(-2,2)
-gr=f.variables['lonh'][:]
-
-print rr._get_staggervec('u','e')
-
-
-#print rr.get_slice(tup)
+#rr.get_slice(tup)
+y,x=rr.get_physgrid(tup)
+print np.shape(x)
+print np.shape(y)
+#print x
+#print y
 
 
 #rr.set_zcoord_active('added')

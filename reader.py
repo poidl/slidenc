@@ -1,6 +1,6 @@
 #################################################################
 # slidenc is a data visualization tool
-# Copyright (C) 2011-2013  Stefan Riha
+# Copyright (C) 2011-2014  Stefan Riha
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -91,6 +91,7 @@ class myreader:
                 self.zcoord_index=self.ncdims.index(magicdim)
                 self.zcoord_trafovarname='e'
 
+
     def set_zcoord_active(self,string):
         if string not in ['native','added']:
             print 'set_active_zcoord(string): '
@@ -104,32 +105,98 @@ class myreader:
         elif string=='added': 
             self.zcoord_active='added'
             
+            
 #    def get_slice(self,tup):
 #        if self.zcoord_trafo_available is False:
 #            va=self.ncr.varread(self.varname,tup)
-#        else:
-#            if self.zcoord_active=='native':
-#                va=self.ncr.varread(self.varname,tup)
-#            if self.zcoord_active=='added':
-#                va=self.__regrid(tup)
+##        if self.zcoord_active=='added':
+##            va=self.__regrid(tup)
+##        else:
+##            if self.zcoord_active=='native':
+##                va=self.ncr.varread(self.varname,tup)
+##            if self.zcoord_active=='added':
+##                va=self.__regrid(tup)
 #        return va
-
+        
+        
+    def get_physgrid(self,tup):
+        isliceddims = [i for i, x in enumerate(tup) if x == slice(None)]
+        sliceddims=[self.ncdims[i] for i in isliceddims]
+        ndims=len(self.ncdims)
+        idims=np.arange(ndims)
+        ifixeddims=[i for i in idims if i not in isliceddims]
+        print 'isliceddims: '
+        print isliceddims
+        print 'sliceddims: '
+        print sliceddims
+        print 'ifixeddims: '
+        print ifixeddims
+        x=self.ncr.varread(sliceddims[0],slice(None))
+        y=self.ncr.varread(sliceddims[1],slice(None))
+        y,x=np.meshgrid(y,x)       
+        
+    
+        if self.zcoord_active=='added':
+            l=list(tup)
+            print l
+            print 'hallo'
+            stag=self._get_staggervec(self.zcoord_trafovarname,self.varname)
+            for i in ifixeddims:
+                if stag[i]==1:
+                    if l[i]<self.ncshape[i]:
+                        l[i]=slice(l[i],l[i]+2)
+                elif stag[i]==-1:
+                    if l[i]>0:
+                        l[i]=slice(l[i]-1,l[i]+1) 
+                elif stag[i]==2:
+                        l[i]=slice(l[i],l[i]+2)                        
+                elif stag[i]==-2: 
+                    if l[i]>0 and l[i]<self.ncshape[i]:
+                        l[i]=slice(l[i]-1,l[i]+1) 
+                        
+            tup=tuple(l)
+            print tup
+            e=self.ncr.varread(self.zcoord_trafovarname,tup)
+#            iinterp=[i==0 for i in stag]
+#            i1=np.sum(iinterp[0:isliceddims[0]])
+#            i2=i1+1+np.sum(iinterp[isliceddims[0]+1:isliceddims[1]])
+#            print e.shape
+#            print i1
+#            print i2
+            
+#            for i in ifixeddims:               
+#                if stag(i)==-2
+            
+        
+        return x,y
+        
+        
+        
 #    def __regrid(self,tup):
 #        izc=self.zcoord_index
-#        ncdims2=self.ncr.vardims(self.zcoord_trafovarname) 
+#        #ncdims2=self.ncr.vardims(self.zcoord_trafovarname) 
 #        # check for staggered grid
-#        staggered=[i==j for i,j in zip(self.ncdims,ncdims2)]
+#        staggered=self._get_staggervec(self.zcoord_trafovarname,self.varname)
+#        print 'staggered: '
+#        print staggered
 #        
 #        
 #        self.ncdims=self.ncr.vardims(self.varname)
 #        islice = [i for i, x in enumerate(tup) if x == slice(None)]
-#        dimslice=[self.ncdims[i] for i in islice]
+#        isliceddims=[self.ncdims[i] for i in islice]
+#        print 'islice: '
+#        print islice
+#        print 'dimslice: '
+#        print isliceddims
+#        
+        
+        
 #        if izc in islice:
 #            dim2=dimslice[islice.index(izc)-1] #non-vertical dim
 #            print dim2
-#            #data=self.ncr.varread(self.varname,tup)
-#            #if self.modelguess='him'
-#    
+            #data=self.ncr.varread(self.varname,tup)
+            #if self.modelguess='him'
+    
     
     def _get_staggervec(self,var1name,var2name):
         #0:--- 1:- - -  (-1): - - - (2):- - - (-2): - - -  (99): none of the above
@@ -166,17 +233,8 @@ class myreader:
                 staggered[i]=0
                 
         return staggered
-                 
-  
-         
-         
-                 
-            
+     
 #                z=self.ncr.varread(self.zcoord_trafovarname,tup) 
-            
-        
-        
-#        
         
 #        self.__set_dims()
 #        self.__set_shape()
