@@ -35,8 +35,8 @@ tup=( 1,slice(None), 1,slice(None))
 
 #rr.get_slice(tup)
 y,x=rr.get_physgrid(tup)
-print np.shape(x)
-print np.shape(y)
+#print np.shape(x)
+#print np.shape(y)
 #print x
 #print y
 

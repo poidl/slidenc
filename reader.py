@@ -15,6 +15,7 @@
 
 from netCDF4 import Dataset as NF
 import numpy as np
+import regrid as regrid
         
         
 class ncreader:
@@ -121,16 +122,14 @@ class myreader:
         
     def get_physgrid(self,tup):
         isliceddims = [i for i, x in enumerate(tup) if x == slice(None)]
+        ifixeddims=[i for i, x in enumerate(tup) if x != slice(None)]
         sliceddims=[self.ncdims[i] for i in isliceddims]
-        ndims=len(self.ncdims)
-        idims=np.arange(ndims)
-        ifixeddims=[i for i in idims if i not in isliceddims]
         print 'isliceddims: '
         print isliceddims
-        print 'sliceddims: '
-        print sliceddims
-        print 'ifixeddims: '
-        print ifixeddims
+#        print 'sliceddims: '
+#        print sliceddims
+#        print 'ifixeddims: '
+#        print ifixeddims
         x=self.ncr.varread(sliceddims[0],slice(None))
         y=self.ncr.varread(sliceddims[1],slice(None))
         y,x=np.meshgrid(y,x)       
@@ -139,8 +138,8 @@ class myreader:
         if self.zcoord_active=='added':
             l=list(tup)
             print l
-            print 'hallo'
             stag=self._get_staggervec(self.zcoord_trafovarname,self.varname)
+            print stag
             for i in ifixeddims:
                 if stag[i]==1:
                     if l[i]<self.ncshape[i]:
@@ -157,6 +156,16 @@ class myreader:
             tup=tuple(l)
             print tup
             e=self.ncr.varread(self.zcoord_trafovarname,tup)
+            #a=np.array([[1.,2.,3.],[4.,5.,6.],[7.,8.,9.]])
+            regr=regrid.regrid()
+            
+            stag1=stag[isliceddims[0]]
+            stag2=stag[isliceddims[1]]
+            b=regr.d2(e,stag1,stag2)
+
+            print b.shape
+        
+            
 #            iinterp=[i==0 for i in stag]
 #            i1=np.sum(iinterp[0:isliceddims[0]])
 #            i2=i1+1+np.sum(iinterp[isliceddims[0]+1:isliceddims[1]])
@@ -204,7 +213,7 @@ class myreader:
         ncdims1=self.ncr.vardims(var1name)
         ncdims2=self.ncr.vardims(var2name)
         staggered=[i!=j for i,j in zip(ncdims1,ncdims2)]
-        print staggered
+        #print staggered
         for i in range(len(staggered)):
             if staggered[i]:
                 start=self.ncr.ncf.variables[ncdims1[i]][:2]
