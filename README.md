@@ -49,11 +49,12 @@ UBUNTU 12.04:
 	sudo python setup.py install; cd ..
 	sudo apt-get install python-qt4
 
-WINDOWS:
+WINDOWS 7:
 Install python(x,y) 2.7.5.0. During the installation, select netcdf4-python as an additional component to install.
 
 MAC OS X 10.8:
 install macports 2.2.1 (check http://www.macports.org/install.php)
+
 	sudo port install py27-ipython
 	sudo port install py27-matplotlib
 	sudo port install py27-pyqt4
@@ -69,9 +70,13 @@ If I understood the license text correctly, I’m required to provide instructio
 So here it is:
 
 	wget https://pypi.python.org/packages/source/P/PyInstaller/PyInstaller-2.1.tar.gz
+	
 Change into the extracted directory and run
+
 	python pyinstaller.py --onefile PATH/TO/SLIDENC/slidenc.PY
+	
 This will create a directory slidenc with a .spec file. Open the file and change hiddenimports=[] to hiddenimports=['netCDF4_utils','netcdftime']. Delete the ‘dist’ and ‘build’ directories and run
+
 	python pyinstaller.py slidenc/slidenc.spec
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
