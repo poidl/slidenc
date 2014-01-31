@@ -74,6 +74,9 @@ class myreader:
             return
         self.__ncread_vardata()
         self.__guess_trafo() 
+    
+    def get_var(self,tup):
+        return self.ncr.varread(self.varname,tup)
 
     def __ncread_vardata(self):
         self.ncdims=self.ncr.vardims(self.varname)
@@ -126,86 +129,53 @@ class myreader:
         sliceddims=[self.ncdims[i] for i in isliceddims]
         print 'isliceddims: '
         print isliceddims
-#        print 'sliceddims: '
-#        print sliceddims
+        print 'sliceddims: '
+        print sliceddims
 #        print 'ifixeddims: '
 #        print ifixeddims
         x=self.ncr.varread(sliceddims[0],slice(None))
         y=self.ncr.varread(sliceddims[1],slice(None))
         y,x=np.meshgrid(y,x)       
         
-    
+ 
         if self.zcoord_active=='added':
-            l=list(tup)
-            print l
-            stag=self._get_staggervec(self.zcoord_trafovarname,self.varname)
-            print stag
-            for i in ifixeddims:
-                if stag[i]==1:
-                    if l[i]<self.ncshape[i]:
-                        l[i]=slice(l[i],l[i]+2)
-                elif stag[i]==-1:
-                    if l[i]>0:
-                        l[i]=slice(l[i]-1,l[i]+1) 
-                elif stag[i]==2:
-                        l[i]=slice(l[i],l[i]+2)                        
-                elif stag[i]==-2: 
-                    if l[i]>0 and l[i]<self.ncshape[i]:
-                        l[i]=slice(l[i]-1,l[i]+1) 
-                        
-            tup=tuple(l)
-            print tup
-            e=self.ncr.varread(self.zcoord_trafovarname,tup)
-            #a=np.array([[1.,2.,3.],[4.,5.,6.],[7.,8.,9.]])
-            regr=regrid.regrid()
-            
-            stag1=stag[isliceddims[0]]
-            stag2=stag[isliceddims[1]]
-            b=regr.d2(e,stag1,stag2)
+            if self.zcoord_index in isliceddims:
+                l=list(tup)
+                #print l
+                stag=self._get_staggervec(self.zcoord_trafovarname,self.varname)
+                #print stag
+                for i in ifixeddims:
+                    if stag[i]==1:
+                        if l[i]<self.ncshape[i]:
+                            l[i]=slice(l[i],l[i]+2)
+                    elif stag[i]==-1:
+                        if l[i]>0:
+                            l[i]=slice(l[i]-1,l[i]+1) 
+                    elif stag[i]==2:
+                            l[i]=slice(l[i],l[i]+2)                        
+                    elif stag[i]==-2: 
+                        if l[i]>0 and l[i]<self.ncshape[i]:
+                            l[i]=slice(l[i]-1,l[i]+1) 
+                            
+                tup=tuple(l)
+                #print tup
+                e=self.ncr.varread(self.zcoord_trafovarname,tup)
+                #a=np.array([[1.,2.,3.],[4.,5.,6.],[7.,8.,9.]])
+                regr=regrid.regrid()
+                
+                stag1=stag[isliceddims[0]]
+                stag2=stag[isliceddims[1]]
+                #b=regr.d2(e,stag1,stag2)
+                e=regr.d2(e,stag1,stag2)
+                #print b
+                if self.zcoord_index==isliceddims[0]:
+                    x=e
+                else:
+                    y=e
 
-            print b.shape
-        
-            
-#            iinterp=[i==0 for i in stag]
-#            i1=np.sum(iinterp[0:isliceddims[0]])
-#            i2=i1+1+np.sum(iinterp[isliceddims[0]+1:isliceddims[1]])
-#            print e.shape
-#            print i1
-#            print i2
-            
-#            for i in ifixeddims:               
-#                if stag(i)==-2
-            
-        
         return x,y
         
         
-        
-#    def __regrid(self,tup):
-#        izc=self.zcoord_index
-#        #ncdims2=self.ncr.vardims(self.zcoord_trafovarname) 
-#        # check for staggered grid
-#        staggered=self._get_staggervec(self.zcoord_trafovarname,self.varname)
-#        print 'staggered: '
-#        print staggered
-#        
-#        
-#        self.ncdims=self.ncr.vardims(self.varname)
-#        islice = [i for i, x in enumerate(tup) if x == slice(None)]
-#        isliceddims=[self.ncdims[i] for i in islice]
-#        print 'islice: '
-#        print islice
-#        print 'dimslice: '
-#        print isliceddims
-#        
-        
-        
-#        if izc in islice:
-#            dim2=dimslice[islice.index(izc)-1] #non-vertical dim
-#            print dim2
-            #data=self.ncr.varread(self.varname,tup)
-            #if self.modelguess='him'
-    
     
     def _get_staggervec(self,var1name,var2name):
         #0:--- 1:- - -  (-1): - - - (2):- - - (-2): - - -  (99): none of the above
@@ -282,12 +252,3 @@ class myreader:
 #        if self.shape_phys()
 #            return
 #        
-                    
-                    
-                    
-            
-        
-        
-        
-
-
