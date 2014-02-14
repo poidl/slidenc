@@ -65,6 +65,7 @@ class myreader:
         self.zcoord_trafo_available=False
         self.zcoord_native=''
         self.zcoord_added=''
+        self.zcoord_added_framing='' # cell centers or frames (bounding borders)?
         self.zcoord_active=''
         
     def set_var(self,string):
@@ -91,6 +92,7 @@ class myreader:
                 self.zcoord_trafo_available=True
                 self.zcoord_native=magicdim
                 self.zcoord_added='z'
+                self.zcoord_added_framing=True
                 self.zcoord_active='native'
                 self.zcoord_index=self.ncdims.index(magicdim)
                 self.zcoord_trafovarname='e'
@@ -143,7 +145,13 @@ class myreader:
                 l=list(tup)
                 #print l
                 stag=self._get_staggervec(self.zcoord_trafovarname,self.varname)
-                #print stag
+                if self.zcoord_added_framing:
+                    stag[self.zcoord_index]=0
+                    
+                print 'stag: '+str(stag)
+                
+                ###################################################
+                # regrid indices against which is *not* plotted
                 for i in ifixeddims:
                     if stag[i]==1:
                         if l[i]<self.ncshape[i]:
@@ -156,13 +164,21 @@ class myreader:
                     elif stag[i]==-2: 
                         if l[i]>0 and l[i]<self.ncshape[i]:
                             l[i]=slice(l[i]-1,l[i]+1) 
-                            
-                tup=tuple(l)
-                #print tup
+                
+                tup=tuple(l)                                      
                 e=self.ncr.varread(self.zcoord_trafovarname,tup)
+                
+                # lnew is squeezed tup
+                lnew=[i for i in l if i!=1]
+                                                             
                 #a=np.array([[1.,2.,3.],[4.,5.,6.],[7.,8.,9.]])
                 regr=regrid.regrid()
                 
+                e=regr.reduce(e,lnew)
+
+                ###################################################
+                # regrid indices against which *is* plotted
+                                
                 stag1=stag[isliceddims[0]]
                 stag2=stag[isliceddims[1]]
                 #b=regr.d2(e,stag1,stag2)
@@ -195,7 +211,7 @@ class myreader:
                 if v1[0]<v2[0] and v2[0]<v1[1]:
                     if v2[-2]<v1[-1] and v1[-1]<v2[-1]:
                         staggered[i]=1
-                    elif v1[-2]<v2[-1] and v2[-1]<v1[-1]:
+                    elif v1[-2]<v2[-1] and v2[-1]<v1[-1]:                
                         staggered[i]=2
                     else:
                         staggered[i]=99

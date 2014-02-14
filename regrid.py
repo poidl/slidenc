@@ -16,6 +16,28 @@
 import numpy as np
 
 class regrid:
+
+    def reduce(self,var,l):
+        # for example: if var.shape is (5,5,2) and l[2] is not slice(None) 
+        # then the third dimension is regridded to the center, output is of shape (5,5)
+        # assumes that dimension is 2 where l is not slice(None)
+        
+        ireduce=[ind for ind,item in enumerate(l) if item != slice(None)]
+         
+        for i in ireduce:
+            l1=l
+            l1[i]=0
+            l2=l
+            l2[i]=1
+            
+            tup1=tuple(l1)
+            tup2=tuple(l2)
+            
+            var=0.5*(var[tup1]+var[tup2])
+            
+        return var
+         
+
     
     def d2(self,var,stag1,stag2):
 

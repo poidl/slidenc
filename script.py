@@ -32,11 +32,15 @@ print rr.varname
 print rr.zcoord_trafo_available
 rr.set_zcoord_active('added')
 print rr.zcoord_active
-tup=(1, slice(None), 57,slice(None))
+tup=(1, slice(None), slice(None), 3)
 
 #rr.get_slice(tup)
 v=rr.get_var(tup)
 x,y=rr.get_physgrid(tup)
+
+print v.shape
+print x.shape
+print y.shape
 
 #print v.shape
 #plt.plot(x[0,:])
