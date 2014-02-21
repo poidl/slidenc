@@ -42,14 +42,15 @@ class regrid:
     def d2(self,var,stag1,stag2):
 
         def rgrd(var,stag):
+            raise Exception('this does not make sense if regridding a coordinate in direction of itself')
             xn,yn=var.shape
-            if stag==1: # leave last gridpoint untouched
+            if stag==1: # linear interpolation, then append last grid point unmodified
                 var[0:-1,:]=var[0:-1,:]+0.5*np.diff(var,1,0)
-            if stag==2:
+            if stag==2: # lin. int.
                 var=var[0:-1,:]+0.5*np.diff(var,1,0)
-            if stag==-1: # leave first gridpoint untouched
+            if stag==-1: # lin. int., then append first grid point unmodified
                 var[1:,:]=var[0:-1,:]+0.5*np.diff(var,1,0)   
-            if stag==-2:
+            if stag==-2: # lin. int, then append first and last grid point unmodified
                 vi=var[0:-1,:]+0.5*np.diff(var,1,0)
                 var=var[np.r_[0,range(0,xn),:]]
                 var[1:-1,:]=vi 
@@ -65,7 +66,6 @@ class regrid:
 
         return var
             
-
             
 #        if stag2==-1: # leave first gridpoint untouched
 #            var[:,1:]=var[:,0:-1]+0.5*np.diff(var,1,1)   

@@ -65,7 +65,8 @@ class myreader:
         self.zcoord_trafo_available=False
         self.zcoord_native=''
         self.zcoord_added=''
-        self.zcoord_added_framing='' # cell centers or frames (bounding borders)?
+        self.zcoord_added_framing_available='' # cell centers or frames (bounding borders)?
+        self.zcoord_added_framing=''
         self.zcoord_active=''
         
     def set_var(self,string):
@@ -92,7 +93,7 @@ class myreader:
                 self.zcoord_trafo_available=True
                 self.zcoord_native=magicdim
                 self.zcoord_added='z'
-                self.zcoord_added_framing=True
+                self.zcoord_added_framing_available=True
                 self.zcoord_active='native'
                 self.zcoord_index=self.ncdims.index(magicdim)
                 self.zcoord_trafovarname='e'
@@ -145,8 +146,8 @@ class myreader:
                 l=list(tup)
                 #print l
                 stag=self._get_staggervec(self.zcoord_trafovarname,self.varname)
-                if self.zcoord_added_framing:
-                    stag[self.zcoord_index]=0
+                if self.zcoord_added_framing_available and self.zcoord_added_framing:    
+                        stag[self.zcoord_index]=0
                     
                 print 'stag: '+str(stag)
                 

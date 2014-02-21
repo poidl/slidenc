@@ -34,7 +34,8 @@ rr.set_zcoord_active('added')
 print rr.zcoord_active
 tup=(1, slice(None), slice(None), 3)
 
-#rr.get_slice(tup)
+#rr.zcoord_added_framing=True
+
 v=rr.get_var(tup)
 x,y=rr.get_physgrid(tup)
 
