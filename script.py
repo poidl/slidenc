@@ -6,10 +6,11 @@ import reader as reader
 import matplotlib.pyplot as plt
 
 fname='/home/nfs/z3439823/backup/ncfiles/save1.00e00.376.195.nc'
+#fname='/home/nfs/z3439823/backup/ncfiles/roms_avg_8.nc'
 ds=NF(fname)
 
 print dir(ds)
-print dir(ds.dimensions['lath'])
+#print dir(ds.dimensions['lath'])
 
 r=reader.ncreader(fname)
 
@@ -32,16 +33,18 @@ print rr.varname
 print rr.zcoord_trafo_available
 rr.set_zcoord_active('added')
 print rr.zcoord_active
-tup=(1, slice(None), slice(None), 3)
+tup=(1, slice(None),  slice(None),4)
 
 #rr.zcoord_added_framing=True
-
+stag=rr._get_staggervec('e','h')
+print stag
 v=rr.get_var(tup)
 x,y=rr.get_physgrid(tup)
 
-print v.shape
 print x.shape
 print y.shape
+print v.shape
+
 
 #print v.shape
 #plt.plot(x[0,:])

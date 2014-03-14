@@ -65,8 +65,8 @@ class myreader:
         self.zcoord_trafo_available=False
         self.zcoord_native=''
         self.zcoord_added=''
-        self.zcoord_added_framing_available='' # cell centers or frames (bounding borders)?
-        self.zcoord_added_framing=''
+        #self.zcoord_added_framing_available='' # cell centers or frames (bounding borders)?
+        #self.zcoord_added_framing=''
         self.zcoord_active=''
         
     def set_var(self,string):
@@ -127,7 +127,7 @@ class myreader:
         
         
     def get_physgrid(self,tup):
-        isliceddims = [i for i, x in enumerate(tup) if x == slice(None)]
+        isliceddims=[i for i, x in enumerate(tup) if x == slice(None)]
         ifixeddims=[i for i, x in enumerate(tup) if x != slice(None)]
         sliceddims=[self.ncdims[i] for i in isliceddims]
         print 'isliceddims: '
@@ -143,37 +143,28 @@ class myreader:
  
         if self.zcoord_active=='added':
             if self.zcoord_index in isliceddims:
-                l=list(tup)
+                
                 #print l
                 stag=self._get_staggervec(self.zcoord_trafovarname,self.varname)
-                if self.zcoord_added_framing_available and self.zcoord_added_framing:    
-                        stag[self.zcoord_index]=0
+#                 if self.zcoord_added_framing_available and self.zcoord_added_framing:    
+#                         stag[self.zcoord_index]=0
                     
                 print 'stag: '+str(stag)
                 
+                envtup=self._get_envelope_tup(tup,ifixeddims,stag)
                 ###################################################
-                # regrid indices against which is *not* plotted
-                for i in ifixeddims:
-                    if stag[i]==1:
-                        if l[i]<self.ncshape[i]:
-                            l[i]=slice(l[i],l[i]+2)
-                    elif stag[i]==-1:
-                        if l[i]>0:
-                            l[i]=slice(l[i]-1,l[i]+1) 
-                    elif stag[i]==2:
-                            l[i]=slice(l[i],l[i]+2)                        
-                    elif stag[i]==-2: 
-                        if l[i]>0 and l[i]<self.ncshape[i]:
-                            l[i]=slice(l[i]-1,l[i]+1) 
-                
-                tup=tuple(l)                                      
-                e=self.ncr.varread(self.zcoord_trafovarname,tup)
+                # regrid indices against which is *not* plotted (fixed
+                # indices)
+                                                 
+                e=self.ncr.varread(self.zcoord_trafovarname,envtup)
                 
                 # lnew is squeezed tup
+                l=list(envtup)
                 lnew=[i for i in l if i!=1]
                                                              
                 #a=np.array([[1.,2.,3.],[4.,5.,6.],[7.,8.,9.]])
                 regr=regrid.regrid()
+                
                 
                 e=regr.reduce(e,lnew)
 
@@ -191,7 +182,45 @@ class myreader:
                     y=e
 
         return x,y
+    
+    
+    def _get_envelope_tup(self,tup,ifixeddims,stag):
         
+        # compute envelope tuple of the plotted variable with respect 
+        # to a staggered grid
+        # example from HIM: we want the z coordinates of u(layer,lath,lonq)
+        # for the slice u(:,:,5). 
+        # z is defined on z(interface,lath,lonh) and 
+        # needs be interpolated onto (layer,lath,lonq). the envelope tuple is
+        # (:,:,4:5)
+        raise Exception('implement extrapolation in regrid.reduce')
+            
+        l=list(tup)
+        
+        for i in ifixeddims:
+            if stag[i]==1:
+                if l[i]<self.ncshape[i]:
+                    l[i]=slice(l[i],l[i]+2)
+                else: # for the last grid point, extrapolate linearly from interior
+                    l[i]=slice(l[i]-1,l[i]+1)
+            elif stag[i]==-1:
+                if l[i]>0:
+                    l[i]=slice(l[i]-1,l[i]+1) 
+                else: # for the first grid point, extrapolate 
+                    l[i]=slice(l[i],l[i]+2)
+            elif stag[i]==2:
+                    l[i]=slice(l[i],l[i]+2)                        
+            elif stag[i]==-2: 
+                if l[i]>0 and l[i]<self.ncshape[i]:
+                    l[i]=slice(l[i]-1,l[i]+1)
+                elif l[i]==0 and l[i]<self.ncshape[i]: # first
+                    l[i]=slice(0,2)
+                elif l[i]>0 and l[i]==self.ncshape[i]: # last
+                    l[i]=slice(l[i]-2,l[i])
+       
+        
+        tup=tuple(l)
+        return tup
         
     
     def _get_staggervec(self,var1name,var2name):

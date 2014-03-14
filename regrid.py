@@ -20,7 +20,7 @@ class regrid:
     def reduce(self,var,l):
         # for example: if var.shape is (5,5,2) and l[2] is not slice(None) 
         # then the third dimension is regridded to the center, output is of shape (5,5)
-        # assumes that dimension is 2 where l is not slice(None)
+        # assumes that the fixed index is of dimension 2
         
         ireduce=[ind for ind,item in enumerate(l) if item != slice(None)]
          
@@ -42,7 +42,7 @@ class regrid:
     def d2(self,var,stag1,stag2):
 
         def rgrd(var,stag):
-            raise Exception('this does not make sense if regridding a coordinate in direction of itself')
+            #raise Exception('this does not make sense if regridding a coordinate in direction of itself')
             xn,yn=var.shape
             if stag==1: # linear interpolation, then append last grid point unmodified
                 var[0:-1,:]=var[0:-1,:]+0.5*np.diff(var,1,0)
