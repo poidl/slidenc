@@ -16,10 +16,10 @@ r=reader.ncreader(fname)
 
 print r.ncfname
 
-print r.vars()
-print r.dimlims()
-print r.vardims('u')
-print r.varshape_phys('u')
+#print r.vars()
+#print r.dimlims()
+#print r.vardims('u')
+#print r.varshape_phys('u')
 #tup=(slice(None))
 #print r.varread('lonh',tup)
 
@@ -28,22 +28,24 @@ print r.varshape_phys('u')
 rr=reader.myreader(fname)
 rr.set_var('u')
 
-print rr.modelguess
-print rr.varname
-print rr.zcoord_trafo_available
+#print rr.modelguess
+#print rr.varname
+#print rr.zcoord_trafo_available
 rr.set_zcoord_active('added')
 print rr.zcoord_active
-tup=(1, slice(None),  slice(None),4)
+tup=(1, slice(None),slice(None),0)
 
 #rr.zcoord_added_framing=True
-stag=rr._get_staggervec('e','h')
-print stag
-v=rr.get_var(tup)
-x,y=rr.get_physgrid(tup)
+#stag=rr._get_staggervec('e','h')
+#print stag
+#v=rr.get_var(tup)
+#rr._get_envelope_tup(tup,ifixeddims,stag)
+envtup=rr.get_physgrid(tup)
+print envtup
 
-print x.shape
-print y.shape
-print v.shape
+#print x.shape
+#print y.shape
+#print v.shape
 
 
 #print v.shape

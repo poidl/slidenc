@@ -151,38 +151,40 @@ class myreader:
                     
                 print 'stag: '+str(stag)
                 
-                envtup=self._get_envelope_tup(tup,ifixeddims,stag)
+                envtup,guessed=self._get_envelope_tup(tup,ifixeddims,stag)
                 ###################################################
                 # regrid indices against which is *not* plotted (fixed
                 # indices)
-                                                 
+                                                  
                 e=self.ncr.varread(self.zcoord_trafovarname,envtup)
-                
+                 
                 # lnew is squeezed tup
                 l=list(envtup)
                 lnew=[i for i in l if i!=1]
-                                                             
+                guessed=[g for g,ll in zip(guessed,l) if ll!=1]
+                                                              
                 #a=np.array([[1.,2.,3.],[4.,5.,6.],[7.,8.,9.]])
                 regr=regrid.regrid()
-                
-                
-                e=regr.reduce(e,lnew)
 
-                ###################################################
-                # regrid indices against which *is* plotted
-                                
-                stag1=stag[isliceddims[0]]
-                stag2=stag[isliceddims[1]]
-                #b=regr.d2(e,stag1,stag2)
-                e=regr.d2(e,stag1,stag2)
-                #print b
-                if self.zcoord_index==isliceddims[0]:
-                    x=e
-                else:
-                    y=e
+                 
+                e=regr.reduce(e,lnew,guessed)
+#                regr.reduce_test()
+# 
+#                 ###################################################
+#                 # regrid indices against which *is* plotted
+#                                 
+#                 stag1=stag[isliceddims[0]]
+#                 stag2=stag[isliceddims[1]]
+#                 #b=regr.d2(e,stag1,stag2)
+#                 e=regr.d2(e,stag1,stag2)
+#                 #print b
+#                 if self.zcoord_index==isliceddims[0]:
+#                     x=e
+#                 else:
+#                     y=e
 
-        return x,y
-    
+        #return x,y
+        return envtup
     
     def _get_envelope_tup(self,tup,ifixeddims,stag):
         
@@ -192,35 +194,45 @@ class myreader:
         # for the slice u(:,:,5). 
         # z is defined on z(interface,lath,lonh) and 
         # needs be interpolated onto (layer,lath,lonq). the envelope tuple is
-        # (:,:,4:5)
-        raise Exception('implement extrapolation in regrid.reduce')
+        # (:,:,4:5) and contains all data needed
+        
+        #raise Exception('implement extrapolation in regrid.reduce')
             
         l=list(tup)
+        # `guessing` is needed for correctly reducing (interpolating) 
+        # the data retrieved with the envelope tuple enclosing the fixed indices
+        # at the origin and end of a dimension 
+        # values: 1 if extrapolating at origin, 2 if extr. at end
+        guessing=[0]*len(l) 
         
         for i in ifixeddims:
             if stag[i]==1:
-                if l[i]<self.ncshape[i]:
+                if l[i]<self.ncshape[i]-1:
                     l[i]=slice(l[i],l[i]+2)
                 else: # for the last grid point, extrapolate linearly from interior
                     l[i]=slice(l[i]-1,l[i]+1)
+                    guessing[i]=2
             elif stag[i]==-1:
                 if l[i]>0:
                     l[i]=slice(l[i]-1,l[i]+1) 
                 else: # for the first grid point, extrapolate 
                     l[i]=slice(l[i],l[i]+2)
+                    guessing[i]=1
             elif stag[i]==2:
                     l[i]=slice(l[i],l[i]+2)                        
-            elif stag[i]==-2: 
-                if l[i]>0 and l[i]<self.ncshape[i]:
+            elif stag[i]==-2:
+                if l[i]>0 and l[i]<self.ncshape[i]-1:
                     l[i]=slice(l[i]-1,l[i]+1)
-                elif l[i]==0 and l[i]<self.ncshape[i]: # first
+                elif l[i]==0 and l[i]<self.ncshape[i]-1: # first
                     l[i]=slice(0,2)
-                elif l[i]>0 and l[i]==self.ncshape[i]: # last
+                    guessing[i]=1
+                elif l[i]>0 and l[i]==self.ncshape[i]-1: # last
                     l[i]=slice(l[i]-2,l[i])
+                    guessing[i]=2
        
         
         tup=tuple(l)
-        return tup
+        return tup,guessing
         
     
     def _get_staggervec(self,var1name,var2name):
