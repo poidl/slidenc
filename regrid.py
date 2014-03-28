@@ -52,8 +52,10 @@ class regrid:
                 var=var[tup2]+0.5*(var[tup2]-var[tup1])
             
             l[i]=slice(0,1,None)    
-            
+        
+        var=np.squeeze(var)
         return var
+  
          
     def reduce_test(self):
         va=np.ones([5,2,5,2])
@@ -61,33 +63,46 @@ class regrid:
         guessed=[0,0,0,0]
         out=self.reduce(va,l,guessed)
         print out.shape
-    
-    def d2(self,var,stag1,stag2):
-
-        def rgrd(var,stag):
-            #raise Exception('this does not make sense if regridding a coordinate in direction of itself')
-            xn,yn=var.shape
-            if stag==1: # linear interpolation, then append last grid point unmodified
-                var[0:-1,:]=var[0:-1,:]+0.5*np.diff(var,1,0)
-            if stag==2: # lin. int.
-                var=var[0:-1,:]+0.5*np.diff(var,1,0)
-            if stag==-1: # lin. int., then append first grid point unmodified
-                var[1:,:]=var[0:-1,:]+0.5*np.diff(var,1,0)   
-            if stag==-2: # lin. int, then append first and last grid point unmodified
-                vi=var[0:-1,:]+0.5*np.diff(var,1,0)
-                var=var[np.r_[0,range(0,xn),:]]
-                var[1:-1,:]=vi 
-            return var
-
-        if stag1!=0:        
-            var=rgrd(var,stag1)            
  
-        if stag2 != 0:
-            var=var.transpose()
-            var=rgrd(var,stag2)
-            var=var.transpose()
+        
+    def cellvertices(self,var):
+        if var.ndim!=1:
+            raise Exception('input must be a vector')
+        dif=0.5*np.diff(var,1,0)
+        v=var[0:-1]+dif
+        v=v[np.r_[0,range(0,len(v)),0]]
+        v[0]=var[0]-dif[0]
+        v[-1]=var[-1]+dif[-1]
+        return v
 
-        return var
+        
+    
+#     def d2(self,var,stag1,stag2):
+# 
+#         def rgrd(var,stag):
+#             #raise Exception('this does not make sense if regridding a coordinate in direction of itself')
+#             xn,yn=var.shape
+#             if stag==1: # linear interpolation, then append last grid point unmodified
+#                 var[0:-1,:]=var[0:-1,:]+0.5*np.diff(var,1,0)
+#             if stag==2: # lin. int.
+#                 var=var[0:-1,:]+0.5*np.diff(var,1,0)
+#             if stag==-1: # lin. int., then append first grid point unmodified
+#                 var[1:,:]=var[0:-1,:]+0.5*np.diff(var,1,0)   
+#             if stag==-2: # lin. int, then append first and last grid point unmodified
+#                 vi=var[0:-1,:]+0.5*np.diff(var,1,0)
+#                 var=var[np.r_[0,range(0,xn),:]]
+#                 var[1:-1,:]=vi 
+#             return var
+# 
+#         if stag1!=0:        
+#             var=rgrd(var,stag1)            
+#  
+#         if stag2 != 0:
+#             var=var.transpose()
+#             var=rgrd(var,stag2)
+#             var=var.transpose()
+# 
+#         return var
             
             
 #        if stag2==-1: # leave first gridpoint untouched

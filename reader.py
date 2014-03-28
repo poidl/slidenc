@@ -65,6 +65,7 @@ class myreader:
         self.zcoord_trafo_available=False
         self.zcoord_native=''
         self.zcoord_added=''
+        self.cellgrid=False
         #self.zcoord_added_framing_available='' # cell centers or frames (bounding borders)?
         #self.zcoord_added_framing=''
         self.zcoord_active=''
@@ -138,40 +139,43 @@ class myreader:
 #        print ifixeddims
         x=self.ncr.varread(sliceddims[0],slice(None))
         y=self.ncr.varread(sliceddims[1],slice(None))
+        
+        regr=regrid.regrid()
+        
+        if self.cellgrid==True:
+            x=regr.cellvertices(x)
+            y=regr.cellvertices(y)
+
         y,x=np.meshgrid(y,x)       
         
  
         if self.zcoord_active=='added':
             if self.zcoord_index in isliceddims:
                 
-                #print l
                 stag=self._get_staggervec(self.zcoord_trafovarname,self.varname)
-#                 if self.zcoord_added_framing_available and self.zcoord_added_framing:    
-#                         stag[self.zcoord_index]=0
-                    
-                print 'stag: '+str(stag)
-                
-                envtup,guessed=self._get_envelope_tup(tup,ifixeddims,stag)
+
+                #print 'stag: '+str(stag)
+ 
                 ###################################################
                 # regrid indices against which is *not* plotted (fixed
                 # indices)
-                                                  
+                envtup,guessed=self._get_envelope_tup(tup,ifixeddims,stag)                                                 
                 e=self.ncr.varread(self.zcoord_trafovarname,envtup)
                  
                 # lnew is squeezed tup
                 l=list(envtup)
-                lnew=[i for i in l if i!=1]
+                lnew=[i for i in l if i.start==None or ((i.start!=None) and (i.stop>i.start+1))]
                 guessed=[g for g,ll in zip(guessed,l) if ll!=1]
                                                               
-                #a=np.array([[1.,2.,3.],[4.,5.,6.],[7.,8.,9.]])
-                regr=regrid.regrid()
-
-                 
+                    
                 e=regr.reduce(e,lnew,guessed)
+#                print e.shape
 #                regr.reduce_test()
 # 
-#                 ###################################################
-#                 # regrid indices against which *is* plotted
+                 ###################################################
+                 # regrid indices against which *is* plotted
+                 
+                 
 #                                 
 #                 stag1=stag[isliceddims[0]]
 #                 stag2=stag[isliceddims[1]]
@@ -184,7 +188,7 @@ class myreader:
 #                     y=e
 
         #return x,y
-        return envtup
+        return 
     
     def _get_envelope_tup(self,tup,ifixeddims,stag):
         

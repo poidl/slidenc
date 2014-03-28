@@ -32,16 +32,20 @@ rr.set_var('u')
 #print rr.varname
 #print rr.zcoord_trafo_available
 rr.set_zcoord_active('added')
-print rr.zcoord_active
-tup=(1, slice(None),slice(None),0)
+#print rr.zcoord_active
+sl=slice(None)
+fix1=slice(1,2,None)
+fix2=slice(0,1,None)
+tup=(fix1, sl, fix2, sl)
 
 #rr.zcoord_added_framing=True
 #stag=rr._get_staggervec('e','h')
 #print stag
-#v=rr.get_var(tup)
+u=rr.get_var(tup)
 #rr._get_envelope_tup(tup,ifixeddims,stag)
-envtup=rr.get_physgrid(tup)
-print envtup
+print u.shape
+rr.cellgrid=True
+rr.get_physgrid(tup)
 
 #print x.shape
 #print y.shape
