@@ -65,7 +65,7 @@ class regrid:
         print out.shape
  
         
-    def cellvertices(self,var):
+    def d1_point_to_cellvertices(self,var):
         if var.ndim!=1:
             raise Exception('input must be a vector')
         dif=0.5*np.diff(var,1,0)
@@ -74,9 +74,81 @@ class regrid:
         v[0]=var[0]-dif[0]
         v[-1]=var[-1]+dif[-1]
         return v
+ 
+ 
+    def on_points(self,var,stag1,stag2):
+        def rgrd(var,stag):         
+            #raise Exception('this does not make sense if regridding a coordinate in direction of itself')
+            xn,yn=var.shape
+            dif=0.5*np.diff(var,1,0)
+            if stag==1: # linear interpolation, then extrapolate last grid point
+                var[0:-1,:]=var[0:-1,:]+dif
+                var[-1,:]=var[-1,:]+dif[-1]
+            if stag==2: # lin. int.
+                var=var[0:-1,:]+dif              
+            if stag==-1: # lin. int., then extrapolate first grid point
+                var[1:,:]=var[0:-1,:]+dif   
+                var[0,:]=var[0,:]-dif[0]
+            if stag==-2: # lin. int, then extrapolate first and last grid point 
+                vi=var[0:-1,:]+dif
+                var=var[np.r_[0,range(0,xn)]]
+                var[-1,:]=var[-1,:]+dif[-1]
+                var[0,:]=var[0,:]-dif[0]
+                var[1:-1,:]=vi 
+            
+            return var               
 
-        
+        if stag1!=0:        
+            var=rgrd(var,stag1)            
+  
+        if stag2 != 0:
+            var=var.transpose()
+            var=rgrd(var,stag2)
+            var=var.transpose()
+ 
+        return var
     
+    
+    def on_cellvertices(self,var,stag1,stag2):
+        # regrid input such that it is staggered as (stag1=2, stag2=2)
+        # with respect to plottet variable
+        
+        def rgrd(var,stag):         
+            #raise Exception('this does not make sense if regridding a coordinate in direction of itself')
+            xn,yn=var.shape
+            if stag==1: # at end, increase dimension by one and extrapolate              
+                var=var[np.r_[range(0,xn),xn-1]]                               
+                var[-1,:]=var[-2,:]+(var[-2,:]-var[-3,:])  
+            if stag==-1: # at start, increase dimension by one and extrapolate
+                var=var[np.r_[0,range(0,xn)]]     
+                var[0,:]=var[1,:]-(var[2,:]-var[1,:])
+            if stag==0: # interpolate to mid-points, increase and extrapolate
+                dif=0.5*np.diff(var,1,0)
+                v1=var[0,:]-dif[0]
+                v2=var[-1,:]+dif[-1]
+                var[:-1,:]=var[:-1,:]+dif # keep last
+                var=var[np.r_[0,range(0,xn)]] # append at start
+                var[0,:]=v1                
+                var[-1,:]=v2 
+            if stag==-2: # increase and extrapolate 
+                v1=var[1,:]-var[0,:]
+                v2=var[-1,:]-var[-2,:]
+                var=var[np.r_[0,range(0,xn),xn-1]]  
+                var[0,:]=v1
+                var[-1,:]=v2           
+            
+            return var                                               
+        
+        if stag1!=2:        
+            var=rgrd(var,stag1)     
+          
+        if stag2 != 2:
+            var=var.transpose()
+            var=rgrd(var,stag2)
+            var=var.transpose()
+ 
+        return var            
+        
 #     def d2(self,var,stag1,stag2):
 # 
 #         def rgrd(var,stag):

@@ -137,24 +137,25 @@ class myreader:
         print sliceddims
 #        print 'ifixeddims: '
 #        print ifixeddims
-        x=self.ncr.varread(sliceddims[0],slice(None))
-        y=self.ncr.varread(sliceddims[1],slice(None))
-        
-        regr=regrid.regrid()
-        
+
         if self.cellgrid==True:
-            x=regr.cellvertices(x)
-            y=regr.cellvertices(y)
+            regr=regrid.regrid()
 
-        y,x=np.meshgrid(y,x)       
+        if self.zcoord_index!=isliceddims[0]:
+            x=self.ncr.varread(sliceddims[0],slice(None))
+            if self.cellgrid==True:
+                x=regr.d1_point_to_cellvertices(x)     
+                       
+        if self.zcoord_index!=isliceddims[1]:
+            y=self.ncr.varread(sliceddims[1],slice(None))
+            if self.cellgrid==True:
+                y=regr.d1_point_to_cellvertices(y)                        
+          
         
- 
-        if self.zcoord_active=='added':
-            if self.zcoord_index in isliceddims:
-                
+        if self.zcoord_index in isliceddims:
+            if self.zcoord_active=='added':
+                 
                 stag=self._get_staggervec(self.zcoord_trafovarname,self.varname)
-
-                #print 'stag: '+str(stag)
  
                 ###################################################
                 # regrid indices against which is *not* plotted (fixed
@@ -166,29 +167,42 @@ class myreader:
                 l=list(envtup)
                 lnew=[i for i in l if i.start==None or ((i.start!=None) and (i.stop>i.start+1))]
                 guessed=[g for g,ll in zip(guessed,l) if ll!=1]
-                                                              
-                    
+              
                 e=regr.reduce(e,lnew,guessed)
-#                print e.shape
-#                regr.reduce_test()
-# 
-                 ###################################################
-                 # regrid indices against which *is* plotted
-                 
-                 
-#                                 
-#                 stag1=stag[isliceddims[0]]
-#                 stag2=stag[isliceddims[1]]
-#                 #b=regr.d2(e,stag1,stag2)
-#                 e=regr.d2(e,stag1,stag2)
-#                 #print b
-#                 if self.zcoord_index==isliceddims[0]:
-#                     x=e
-#                 else:
-#                     y=e
+                
+                e=np.squeeze(e)
 
-        #return x,y
-        return 
+                print e.shape
+                
+                
+                ###################################################
+                # regrid indices against which *is* plotted 
+                 
+                stag1=stag[isliceddims[0]]
+                stag2=stag[isliceddims[1]] 
+                
+                if self.cellgrid is False:
+                    e=regr.on_points(e,stag1,stag2)    
+                
+                else:
+                    e=regr.on_cellvertices(e,stag1,stag2)
+                    
+                print e.shape 
+                
+                if self.zcoord_index==isliceddims[0]:
+                    x=e
+                    y,dummy=np.meshgrid(y,x[:,0])
+                elif self.zcoord_index==isliceddims[1]:
+                    y=e    
+                    dummy,x=np.meshgrid(y[0,:],x)  
+                                 
+            else: # self.zcoord_active=='added':
+                y,x=np.meshgrid(y,x)  
+        else: # self.zcoord_index in isliceddims:
+            y,x=np.meshgrid(y,x) 
+          
+        return x,y 
+    
     
     def _get_envelope_tup(self,tup,ifixeddims,stag):
         

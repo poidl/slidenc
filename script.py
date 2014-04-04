@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from netCDF4 import Dataset as NF
-#import numpy as np
+import numpy as np
 import reader as reader
 import matplotlib.pyplot as plt
 
@@ -32,38 +32,34 @@ rr.set_var('u')
 #print rr.varname
 #print rr.zcoord_trafo_available
 rr.set_zcoord_active('added')
+
 #print rr.zcoord_active
 sl=slice(None)
 fix1=slice(1,2,None)
+#fix2=slice(50,51,None) # strait
 fix2=slice(0,1,None)
-tup=(fix1, sl, fix2, sl)
+tup=(fix1, fix2, sl, sl)
+#tup=(fix1, sl,fix2,  sl)
 
 #rr.zcoord_added_framing=True
 #stag=rr._get_staggervec('e','h')
 #print stag
 u=rr.get_var(tup)
+u=np.squeeze(u)
 #rr._get_envelope_tup(tup,ifixeddims,stag)
-print u.shape
+
 rr.cellgrid=True
-rr.get_physgrid(tup)
+y,x=rr.get_physgrid(tup)
+print u.shape
 
-#print x.shape
-#print y.shape
-#print v.shape
+print x.shape
+print y.shape
 
-
-#print v.shape
-#plt.plot(x[0,:])
-#plt.contourf(y,x,v)
-#plt.pcolor(y,x,v)
-#plt.show()
-#print np.shape(x)
-#print np.shape(y)
-#print x
-#print y
+# plt.contourf(x,y,u)
+# plt.pcolor(x,y,u)
+# plt.show()
 
 
-#rr.set_zcoord_active('added')
 
-#print rr.dims
-#print rr.shape_phys
+print '*** end ***'
+
