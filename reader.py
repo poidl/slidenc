@@ -78,8 +78,6 @@ class myreader:
         self.__ncread_vardata()
         self.__guess_trafo() 
     
-    def get_var(self,tup):
-        return self.ncr.varread(self.varname,tup)
 
     def __ncread_vardata(self):
         self.ncdims=self.ncr.vardims(self.varname)
@@ -125,18 +123,22 @@ class myreader:
 ##            if self.zcoord_active=='added':
 ##                va=self.__regrid(tup)
 #        return va
+
+    def get_var(self,tup):
         
+        ifixeddims=[i for i, x in enumerate(tup) if x != slice(None)]       
+        if self.zcoord_index in ifixeddims:
+            if self.zcoord_active=='added':
+                raise Exception('hoit')
+        else:
+            va=self.ncr.varread(self.varname,tup)   
+            
+        return va       
         
     def get_physgrid(self,tup):
         isliceddims=[i for i, x in enumerate(tup) if x == slice(None)]
         ifixeddims=[i for i, x in enumerate(tup) if x != slice(None)]
         sliceddims=[self.ncdims[i] for i in isliceddims]
-        print 'isliceddims: '
-        print isliceddims
-        print 'sliceddims: '
-        print sliceddims
-#        print 'ifixeddims: '
-#        print ifixeddims
 
         if self.cellgrid==True:
             regr=regrid.regrid()
@@ -163,12 +165,7 @@ class myreader:
                 envtup,guessed=self._get_envelope_tup(tup,ifixeddims,stag)                                                 
                 e=self.ncr.varread(self.zcoord_trafovarname,envtup)
                  
-                # lnew is squeezed tup
-                l=list(envtup)
-                lnew=[i for i in l if i.start==None or ((i.start!=None) and (i.stop>i.start+1))]
-                guessed=[g for g,ll in zip(guessed,l) if ll!=1]
-              
-                e=regr.reduce(e,lnew,guessed)
+                e=regr.reduce(e,envtup,guessed)
                 
                 e=np.squeeze(e)
 
@@ -215,41 +212,55 @@ class myreader:
         # (:,:,4:5) and contains all data needed
         
         #raise Exception('implement extrapolation in regrid.reduce')
-            
+        
+        def mod_slice(sl,m):
+        # modify slice object sl: add elements of vector m=[delta_start,delta_stop]
+            if m[0]!=0: # modify start
+                istart=sl.start+m[0]
+                istop=sl.stop
+                              
+            if m[1]!=0: # modify stop
+                istop=sl.stop+m[1]
+                istart=sl.start
+                
+            istep=sl.step
+            return slice(istart,istop,istep)
+        
         l=list(tup)
         # `guessing` is needed for correctly reducing (interpolating) 
         # the data retrieved with the envelope tuple enclosing the fixed indices
         # at the origin and end of a dimension 
         # values: 1 if extrapolating at origin, 2 if extr. at end
-        guessing=[0]*len(l) 
+        guessing=[0]*len(tup) 
         
         for i in ifixeddims:
             if stag[i]==1:
-                if l[i]<self.ncshape[i]-1:
-                    l[i]=slice(l[i],l[i]+2)
+                if l[i].start<self.ncshape[i]-1:
+                    l[i]=mod_slice(l[i],[0,1])
                 else: # for the last grid point, extrapolate linearly from interior
-                    l[i]=slice(l[i]-1,l[i]+1)
+                    l[i]=mod_slice(l[i],[-1,0])
                     guessing[i]=2
             elif stag[i]==-1:
-                if l[i]>0:
-                    l[i]=slice(l[i]-1,l[i]+1) 
+                if l[i].start>0:
+                    l[i]=mod_slice(l[i],[-1,0])                   
                 else: # for the first grid point, extrapolate 
-                    l[i]=slice(l[i],l[i]+2)
+                    l[i]=mod_slice(l[i],[0,1])
                     guessing[i]=1
-            elif stag[i]==2:
-                    l[i]=slice(l[i],l[i]+2)                        
+            elif stag[i]==2:    
+                    l[i]=mod_slice(l[i],[0,1])            
             elif stag[i]==-2:
-                if l[i]>0 and l[i]<self.ncshape[i]-1:
-                    l[i]=slice(l[i]-1,l[i]+1)
-                elif l[i]==0 and l[i]<self.ncshape[i]-1: # first
-                    l[i]=slice(0,2)
+                if l[i].start>0 and l[i].start<self.ncshape[i]-1:
+                    l[i]=mod_slice(l[i],[-1,0])                   
+                elif l[i].start==0: # first
+                    l[i]=mod_slice(l[i],[0,1])  
                     guessing[i]=1
-                elif l[i]>0 and l[i]==self.ncshape[i]-1: # last
-                    l[i]=slice(l[i]-2,l[i])
+                elif l[i].start==self.ncshape[i]-1: # last
+                    l[i]=mod_slice(l[i],[-1,0])                   
                     guessing[i]=2
-       
+                    
+                    
+        tup=tuple(l)       
         
-        tup=tuple(l)
         return tup,guessing
         
     

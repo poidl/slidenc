@@ -36,9 +36,9 @@ rr.set_zcoord_active('added')
 #print rr.zcoord_active
 sl=slice(None)
 fix1=slice(1,2,None)
-#fix2=slice(50,51,None) # strait
-fix2=slice(0,1,None)
-tup=(fix1, fix2, sl, sl)
+fix2=slice(50,51,None) # strait
+#fix2=slice(0,1,None)
+tup=(fix1, sl, sl, fix2 )
 #tup=(fix1, sl,fix2,  sl)
 
 #rr.zcoord_added_framing=True

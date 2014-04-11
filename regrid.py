@@ -17,7 +17,7 @@ import numpy as np
 
 class regrid:
 
-    def reduce(self,var,l,guessed):
+    def reduce(self,var,envtup,guessed):
         # example: if var.shape is (5,5,2) and l[2] is not slice(None) 
         # then the third dimension is re-gridded to the center, output is of shape (5,5)
         # assumes that every index which is not a slice, is of dimension 2
@@ -25,12 +25,16 @@ class regrid:
         # `guessed` is nonzero if the indices to be reduced are from the origin or
         # end of a dimension, and the grid is staggered and extrapolated 
         # (see _get_envelope_tup)
-        
-        ireduce=[ind for ind,item in enumerate(l) if item != slice(None)]
+        l=list(envtup)
+        ireduce=[ind for ind,item in enumerate(l) if not (item.start==None or ((item.start!=None and item.stop==item.start+1))) ]
+#        [i for i in l if i.start==None or ((i.start!=None) and (i.stop>i.start+1))]
+        inot_reduce=[ind for ind,item in enumerate(l) if item.start!=None and item.stop==item.start+1]
         guessed=[guessed[i] for i in ireduce] 
         
         for i in ireduce:
-            l[i]=slice(0,2,None) # 
+            l[i]=slice(0,2,None) #
+        for i in inot_reduce:
+            l[i]=slice(0,1,None) # 
             
         for i,g in zip(ireduce,guessed):
             
@@ -53,7 +57,6 @@ class regrid:
             
             l[i]=slice(0,1,None)    
         
-        var=np.squeeze(var)
         return var
   
          
