@@ -36,10 +36,12 @@ rr.set_zcoord_active('added')
 #print rr.zcoord_active
 sl=slice(None)
 fix1=slice(1,2,None)
-fix2=slice(50,51,None) # strait
+#fix2=slice(50,51,None) # strait
 #fix2=slice(0,1,None)
-tup=(fix1, sl, sl, fix2 )
-#tup=(fix1, sl,fix2,  sl)
+
+fix2=slice(0,1,None)
+#tup=(fix1, -10, sl, sl )
+tup=(fix1, sl,fix2,  sl)
 
 #rr.zcoord_added_framing=True
 #stag=rr._get_staggervec('e','h')
@@ -48,14 +50,15 @@ u=rr.get_var(tup)
 u=np.squeeze(u)
 #rr._get_envelope_tup(tup,ifixeddims,stag)
 
-rr.cellgrid=True
+rr.cellgrid=False
 y,x=rr.get_physgrid(tup)
 print u.shape
 
 print x.shape
 print y.shape
 
-# plt.contourf(x,y,u)
+# #plt.contourf(x,y,u)
+# 
 # plt.pcolor(x,y,u)
 # plt.show()
 

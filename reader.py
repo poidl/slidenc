@@ -126,12 +126,35 @@ class myreader:
 
     def get_var(self,tup):
         
-        ifixeddims=[i for i, x in enumerate(tup) if x != slice(None)]       
+        ifixeddims=[i for i, x in enumerate(tup) if x != slice(None)]
+        isliceddims=[i for i, x in enumerate(tup) if x == slice(None)]
+             
         if self.zcoord_index in ifixeddims:
             if self.zcoord_active=='added':
-                raise Exception('hoit')
+                z=tup[self.zcoord_index]
+                etup=list(tup)
+                etup[self.zcoord_index]=slice(None)
+                ### Next line doesn't make sense; etup is from var, whose fixed
+                # indices could be staggered with respect to e. Need to create
+                # envelope tuple
+                e=self.ncr.varread(self.zcoord_trafovarname,etup)
+                regr=regrid.regrid()
+                e=regr.on_points_multidim(e, [)
+                bl=e>=z
+                s=np.sum(bl,self.zcoord_index)
+                s=np.squeeze(s)
+                
+                n1=e.shape[isliceddims[0]]
+                n2=e.shape[isliceddims[1]]
+                # row major order
+                #if (self.zcoord_index<isliceddims[0]) and (self.zcoord_index<isliceddims[1]):
+                 #   sr=s.ravel()
+                 #   inds=(sr-1)*n1*n2+np.array(n1*n2)
+                
+                print 'hoit'
         else:
             va=self.ncr.varread(self.varname,tup)   
+
             
         return va       
         
@@ -140,8 +163,7 @@ class myreader:
         ifixeddims=[i for i, x in enumerate(tup) if x != slice(None)]
         sliceddims=[self.ncdims[i] for i in isliceddims]
 
-        if self.cellgrid==True:
-            regr=regrid.regrid()
+        regr=regrid.regrid()
 
         if self.zcoord_index!=isliceddims[0]:
             x=self.ncr.varread(sliceddims[0],slice(None))
@@ -178,9 +200,8 @@ class myreader:
                 stag1=stag[isliceddims[0]]
                 stag2=stag[isliceddims[1]] 
                 
-                if self.cellgrid is False:
-                    e=regr.on_points(e,stag1,stag2)    
-                
+                if self.cellgrid is False:     
+                    e=regr.on_points_multidim(e,[stag1,stag2])
                 else:
                     e=regr.on_cellvertices(e,stag1,stag2)
                     

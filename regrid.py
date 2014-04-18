@@ -78,10 +78,49 @@ class regrid:
         v[-1]=var[-1]+dif[-1]
         return v
  
- 
+    def on_points_multidim(self,var,stag):
+        # like on_points but the input field is multi-dimensional
+        # example from HIM: The objective is to get horizontal slice of u (i.e. constant z). 
+        # This requires as a first step to read interface heights 'e', interpolating e on the same 
+        # *horizontal* (but not vertical) grid as u. This function interpolates,
+        #  To achieve this, 'stag' must be zero for the vertical axis.
+        def rgrd(var,stag):
+                     
+            shp0=var.shape[0]
+            dif=0.5*np.diff(var,1,0)
+            if stag==1: # linear interpolation, then extrapolate last grid point
+                var[0:-1,...]=var[0:-1,...]+dif
+                var[-1,...]=var[-1,...]+dif[-1]
+            if stag==2: # lin. int.
+                var=var[0:-1,...]+dif              
+            if stag==-1: # lin. int., then extrapolate first grid point
+                var[1:,...]=var[0:-1,...]+dif   
+                var[0,...]=var[0,...]-dif[0]
+            if stag==-2: # lin. int, then extrapolate first and last grid point 
+                vi=var[0:-1,...]+dif
+                var=var[np.r_[0,range(0,shp0)]]
+                var[-1,...]=var[-1,...]+dif[-1]
+                var[0,...]=var[0,...]-dif[0]
+                var[1:-1,...]=vi 
+            
+            return var               
+        
+        for ii in range(len(stag)):
+            
+            if stag[ii]!=0:
+                var=np.rollaxis(var,ii,0)        
+                var=rgrd(var,stag[ii])   
+                var=np.rollaxis(var,0,ii+1)         
+
+        return var        
+        
+        
+        
     def on_points(self,var,stag1,stag2):
-        def rgrd(var,stag):         
-            #raise Exception('this does not make sense if regridding a coordinate in direction of itself')
+        # remove this function
+        raise Exception('replace by function on_points_multidim?')
+        def rgrd(var,stag):
+                     
             xn,yn=var.shape
             dif=0.5*np.diff(var,1,0)
             if stag==1: # linear interpolation, then extrapolate last grid point
@@ -121,7 +160,7 @@ class regrid:
             xn,yn=var.shape
             if stag==1: # at end, increase dimension by one and extrapolate              
                 var=var[np.r_[range(0,xn),xn-1]]                               
-                var[-1,:]=var[-2,:]+(var[-2,:]-var[-3,:])  
+                var[-1,:]=var[-2,:]+(var[-2,:]-var[-3,:]) 
             if stag==-1: # at start, increase dimension by one and extrapolate
                 var=var[np.r_[0,range(0,xn)]]     
                 var[0,:]=var[1,:]-(var[2,:]-var[1,:])
