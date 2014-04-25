@@ -39,9 +39,10 @@ fix1=slice(1,2,None)
 #fix2=slice(50,51,None) # strait
 #fix2=slice(0,1,None)
 
-fix2=slice(0,1,None)
-#tup=(fix1, -10, sl, sl )
-tup=(fix1, sl,fix2,  sl)
+#fix2=slice(1,2,None)
+tup=(fix1, -200, sl, sl )
+#tup=(sl, -10, sl, fix2 )
+#tup=(fix1, sl,fix2,  sl)
 
 #rr.zcoord_added_framing=True
 #stag=rr._get_staggervec('e','h')
@@ -57,10 +58,11 @@ print u.shape
 print x.shape
 print y.shape
 
-# #plt.contourf(x,y,u)
+plt.contourf(x,y,u)
 # 
 # plt.pcolor(x,y,u)
-# plt.show()
+plt.colorbar()
+plt.show()
 
 
 

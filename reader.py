@@ -131,27 +131,60 @@ class myreader:
              
         if self.zcoord_index in ifixeddims:
             if self.zcoord_active=='added':
+                # we want to plot data on an iso-surface of the added coordinate, 
+                # i.e. get data at constant zcoord.
+                
+                
+                # First, interpolate zcoord onto variable grid
+                
+                # need to extract a 3-d slice of the coordinate. Two of them are the axes against
+                # which is plotted, the third is the vertical direction. 
+                
+                #The remaining fixed indices could be staggered
+                stag=self._get_staggervec(self.zcoord_trafovarname,self.varname)
                 z=tup[self.zcoord_index]
                 etup=list(tup)
                 etup[self.zcoord_index]=slice(None)
-                ### Next line doesn't make sense; etup is from var, whose fixed
-                # indices could be staggered with respect to e. Need to create
-                # envelope tuple
-                e=self.ncr.varread(self.zcoord_trafovarname,etup)
+                vatup=etup
+                ifixeddims_tmp=[i for i, x in enumerate(etup) if x != slice(None)]
+                envtup,guessed=self._get_envelope_tup(etup,ifixeddims_tmp,stag)                                                 
+                e=self.ncr.varread(self.zcoord_trafovarname,envtup)
                 regr=regrid.regrid()
-                e=regr.on_points_multidim(e, [)
+                e=regr.reduce(e,envtup,guessed)                
+                #e=np.squeeze(e)         
+                
+                # re-grid the plot axes 
+                stag_tmp=stag
+                for ii in ifixeddims_tmp:
+                    stag_tmp[ii]=0
+                e=regr.on_points_multidim(e, stag_tmp)
+                #e=np.squeeze(e)
                 bl=e>=z
                 s=np.sum(bl,self.zcoord_index)
                 s=np.squeeze(s)
                 
-                n1=e.shape[isliceddims[0]]
-                n2=e.shape[isliceddims[1]]
+                n1=self.ncshape[isliceddims[0]]
+                n2=self.ncshape[isliceddims[1]]
+                n3=self.ncshape[self.zcoord_index]
                 # row major order
-                #if (self.zcoord_index<isliceddims[0]) and (self.zcoord_index<isliceddims[1]):
-                 #   sr=s.ravel()
-                 #   inds=(sr-1)*n1*n2+np.array(n1*n2)
+                if (self.zcoord_index<isliceddims[0]) and (self.zcoord_index<isliceddims[1]):
+                    sr=s.ravel()
+                    inds1=(sr-1)*n1*n2+np.arange(n1*n2)-1
+                    bottom=inds1>(n3-1)*n1*n2
+                    inds1[bottom]=1 # dummy, correct later
+                    inds2=inds1+n1*n2
+                                  
+                    
+                va1=self.ncr.ncf.variables[self.varname][vatup].flat[inds1]
+                va2=self.ncr.ncf.variables[self.varname][vatup].flat[inds2]
+                z1=e.flat[inds1]
+                z2=e.flat[inds2]
+                dz=(z-z2)/(z1-z2)
+                va=va2+(va1-va2)*dz
+                upper_only= dz==0 # in case dz is zero and lower bottle is nan
+                va[upper_only]=va1[upper_only]
+                va=np.reshape(va,(n1,n2))
                 
-                print 'hoit'
         else:
             va=self.ncr.varread(self.varname,tup)   
 
@@ -224,15 +257,14 @@ class myreader:
     
     def _get_envelope_tup(self,tup,ifixeddims,stag):
         
-        # compute envelope tuple of the plotted variable with respect 
-        # to a staggered grid
+        # compute envelope tuple, or tuple which has to be extracted from variable A such that it can be 
+        # interpolated onto the grid of variable B (which is potentially staggered with respect to grid 
+        # of A).
         # example from HIM: we want the z coordinates of u(layer,lath,lonq)
         # for the slice u(:,:,5). 
         # z is defined on z(interface,lath,lonh) and 
         # needs be interpolated onto (layer,lath,lonq). the envelope tuple is
-        # (:,:,4:5) and contains all data needed
-        
-        #raise Exception('implement extrapolation in regrid.reduce')
+        # (:,:,4:5) and contains all data needed for interpolation
         
         def mod_slice(sl,m):
         # modify slice object sl: add elements of vector m=[delta_start,delta_stop]
@@ -248,9 +280,7 @@ class myreader:
             return slice(istart,istop,istep)
         
         l=list(tup)
-        # `guessing` is needed for correctly reducing (interpolating) 
-        # the data retrieved with the envelope tuple enclosing the fixed indices
-        # at the origin and end of a dimension 
+        # `guessing` means extrapolation. Necessary at start- and end-point if grid of A is smaller than B
         # values: 1 if extrapolating at origin, 2 if extr. at end
         guessing=[0]*len(tup) 
         
