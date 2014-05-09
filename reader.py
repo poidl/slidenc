@@ -64,11 +64,10 @@ class myreader:
         self.ncvars=self.ncr.vars() # tuple
         self.zcoord_trafo_available=False
         self.zcoord_native=''
-        self.zcoord_added=''
-        self.cellgrid=False
-        #self.zcoord_added_framing_available='' # cell centers or frames (bounding borders)?
-        #self.zcoord_added_framing=''
         self.zcoord_active=''
+        self.zcoord_index='' 
+        self.zcoord_added=''    
+        self.cellgrid=False        
         
     def set_var(self,string):
         self.varname=string
@@ -76,61 +75,63 @@ class myreader:
             print 'variable \''+string+'\' not in netcdf file'
             return
         self.__ncread_vardata()
-        self.__guess_trafo() 
+        #self.__guess_trafo()
+        #self.set_trafo_roms() 
+        
+    def set_trafo_him(self):
+        self.zcoord_native='Layer'
+        self.zcoord_added='e' 
+        self.set_trafo_default()
+           
+    def set_trafo_roms(self):
+        self.zcoord_native='s_rho'
+        self.zcoord_added='z'
+        self.set_trafo_default()
     
-
+    def set_trafo_default(self):
+        self.zcoord_trafo_available=True
+        self.zcoord_active='native'
+        self.zcoord_index=self.ncdims.index(self.zcoord_native)    
+        
     def __ncread_vardata(self):
         self.ncdims=self.ncr.vardims(self.varname)
         self.ncshape=self.ncr.varshape(self.varname)
-        self.ncshape_phys=self.ncr.varshape_phys(self.varname)
+#        self.ncshape_phys=self.ncr.varshape_phys(self.varname)
         
-    def __guess_trafo(self):
-        magicdim='Layer'
-        if magicdim in self.ncdims:
-            self.modelguess='him'
-            if 'e' in self.ncvars: 
-                self.zcoord_trafo_available=True
-                self.zcoord_native=magicdim
-                self.zcoord_added='z'
-                self.zcoord_added_framing_available=True
-                self.zcoord_active='native'
-                self.zcoord_index=self.ncdims.index(magicdim)
-                self.zcoord_trafovarname='e'
+#     def __guess_trafo(self):
+#         magicdim='Layer'
+#         if magicdim in self.ncdims:
+#             self.modelguess='him'
+#             if 'e' in self.ncvars: 
+#                 self.zcoord_trafo_available=True
+#                 self.zcoord_native=magicdim
+#                 self.zcoord_active='native'
+#                 self.zcoord_index=self.ncdims.index(magicdim)
+#                 self.zcoord_added='e'
 
 
     def set_zcoord_active(self,string):
-        if string not in ['native','added']:
-            print 'set_active_zcoord(string): '
-            print '     argument must be \'native\' or \'added\''
-            return
         if self.zcoord_trafo_available is False:
-            print 'No coordinate transformation available.'
-            return        
+            raise Exception('No coordinate transformation available.')
+            return 
+        elif string not in ['native','added']:
+            raise Exception('Argument must be \'native\' or \'added\'')           
+            return
+       
         elif string=='native':
             self.zcoord_active='native'
         elif string=='added': 
             self.zcoord_active='added'
             
-            
-#    def get_slice(self,tup):
-#        if self.zcoord_trafo_available is False:
-#            va=self.ncr.varread(self.varname,tup)
-##        if self.zcoord_active=='added':
-##            va=self.__regrid(tup)
-##        else:
-##            if self.zcoord_active=='native':
-##                va=self.ncr.varread(self.varname,tup)
-##            if self.zcoord_active=='added':
-##                va=self.__regrid(tup)
-#        return va
+        
 
     def get_var(self,tup):
         
         ifixeddims=[i for i, x in enumerate(tup) if x != slice(None)]
         isliceddims=[i for i, x in enumerate(tup) if x == slice(None)]
              
-        if self.zcoord_index in ifixeddims:
-            if self.zcoord_active=='added':
+        if (self.zcoord_index in ifixeddims) and \
+            self.zcoord_active=='added':
                 # we want to plot data on an iso-surface of the added coordinate, 
                 # i.e. get data at constant zcoord.
                 
@@ -141,14 +142,14 @@ class myreader:
                 # which is plotted, the third is the vertical direction. 
                 
                 #The remaining fixed indices could be staggered
-                stag=self._get_staggervec(self.zcoord_trafovarname,self.varname)
+                stag=self._get_staggervec(self.zcoord_added,self.varname)
                 z=tup[self.zcoord_index]
                 etup=list(tup)
                 etup[self.zcoord_index]=slice(None)
                 vatup=etup
                 ifixeddims_tmp=[i for i, x in enumerate(etup) if x != slice(None)]
                 envtup,guessed=self._get_envelope_tup(etup,ifixeddims_tmp,stag)                                                 
-                e=self.ncr.varread(self.zcoord_trafovarname,envtup)
+                e=self.ncr.varread(self.zcoord_added,envtup)
                 regr=regrid.regrid()
                 e=regr.reduce(e,envtup,guessed)                
                 #e=np.squeeze(e)         
@@ -187,7 +188,6 @@ class myreader:
                 
         else:
             va=self.ncr.varread(self.varname,tup)   
-
             
         return va       
         
@@ -209,16 +209,16 @@ class myreader:
                 y=regr.d1_point_to_cellvertices(y)                        
           
         
-        if self.zcoord_index in isliceddims:
-            if self.zcoord_active=='added':
+        if (self.zcoord_index in isliceddims) and \
+            self.zcoord_active=='added':
                  
-                stag=self._get_staggervec(self.zcoord_trafovarname,self.varname)
+                stag=self._get_staggervec(self.zcoord_added,self.varname)
  
                 ###################################################
                 # regrid indices against which is *not* plotted (fixed
                 # indices)
                 envtup,guessed=self._get_envelope_tup(tup,ifixeddims,stag)                                                 
-                e=self.ncr.varread(self.zcoord_trafovarname,envtup)
+                e=self.ncr.varread(self.zcoord_added,envtup)
                  
                 e=regr.reduce(e,envtup,guessed)
                 
@@ -247,8 +247,7 @@ class myreader:
                     y=e    
                     dummy,x=np.meshgrid(y[0,:],x)  
                                  
-            else: # self.zcoord_active=='added':
-                y,x=np.meshgrid(y,x)  
+                                 
         else: # self.zcoord_index in isliceddims:
             y,x=np.meshgrid(y,x) 
           
@@ -351,7 +350,7 @@ class myreader:
                 
         return staggered
      
-#                z=self.ncr.varread(self.zcoord_trafovarname,tup) 
+#                z=self.ncr.varread(self.zcoord_added,tup) 
         
 #        self.__set_dims()
 #        self.__set_shape()

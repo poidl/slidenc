@@ -82,8 +82,8 @@ class regrid:
         # like on_points but the input field is multi-dimensional
         # example from HIM: The objective is to get horizontal slice of u (i.e. constant z). 
         # This requires as a first step to read interface heights 'e', interpolating e on the same 
-        # *horizontal* (but not vertical) grid as u. This function interpolates,
-        #  To achieve this, 'stag' must be zero for the vertical axis.
+        # *horizontal* (but not vertical) grid as u. This function interpolates.
+        # In this example, 'stag' must be zero for the vertical axis.
         def rgrd(var,stag):
                      
             shp0=var.shape[0]
@@ -152,8 +152,10 @@ class regrid:
     
     
     def on_cellvertices(self,var,stag1,stag2):
-        # regrid input such that it is staggered as (stag1=2, stag2=2)
-        # with respect to plottet variable
+        # whereas on_points outputs a field which is defined on the same grid
+        # as the plotted variable (stag=0), this function will produce stag=2,
+        # i.e. the output points lie between the points of the plotted variable
+        # (or, viewed in two dimensions, on the cell vertices)
         
         def rgrd(var,stag):         
             #raise Exception('this does not make sense if regridding a coordinate in direction of itself')

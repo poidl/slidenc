@@ -5,8 +5,10 @@ import numpy as np
 import reader as reader
 import matplotlib.pyplot as plt
 
-fname='/home/nfs/z3439823/backup/ncfiles/save1.00e00.376.195.nc'
+#fname='/home/nfs/z3439823/backup/ncfiles/save1.00e00.376.195.nc'
 #fname='/home/nfs/z3439823/backup/ncfiles/roms_avg_8.nc'
+fname='/home/nfs/z3439823/models/roms/ocean_avg.nc'
+
 ds=NF(fname)
 
 print dir(ds)
@@ -31,7 +33,7 @@ rr.set_var('u')
 #print rr.modelguess
 #print rr.varname
 #print rr.zcoord_trafo_available
-rr.set_zcoord_active('added')
+
 
 #print rr.zcoord_active
 sl=slice(None)
@@ -39,14 +41,16 @@ fix1=slice(1,2,None)
 #fix2=slice(50,51,None) # strait
 #fix2=slice(0,1,None)
 
-#fix2=slice(1,2,None)
-tup=(fix1, -200, sl, sl )
+fix2=slice(1,2,None)
+tup=(fix1, fix2, sl, sl )
 #tup=(sl, -10, sl, fix2 )
 #tup=(fix1, sl,fix2,  sl)
 
-#rr.zcoord_added_framing=True
-#stag=rr._get_staggervec('e','h')
-#print stag
+
+
+rr.set_trafo_roms()
+#print rr.zcoord_trafo_available
+#rr.set_zcoord_active('added')
 u=rr.get_var(tup)
 u=np.squeeze(u)
 #rr._get_envelope_tup(tup,ifixeddims,stag)
@@ -55,11 +59,11 @@ rr.cellgrid=False
 y,x=rr.get_physgrid(tup)
 print u.shape
 
-print x.shape
-print y.shape
+#print x.shape
+#print y.shape
 
-plt.contourf(x,y,u)
-# 
+#plt.contourf(x,y,u)
+plt.contourf(u)
 # plt.pcolor(x,y,u)
 plt.colorbar()
 plt.show()
