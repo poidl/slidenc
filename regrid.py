@@ -152,6 +152,7 @@ class regrid:
     
     
     def on_cellvertices(self,var,stag1,stag2):
+        # var must be 2d
         # whereas on_points outputs a field which is defined on the same grid
         # as the plotted variable (stag=0), this function will produce stag=2,
         # i.e. the output points lie between the points of the plotted variable
