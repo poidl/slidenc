@@ -5,6 +5,9 @@ import numpy as np
 import reader as reader
 import matplotlib.pyplot as plt
 
+# enable interactive plotting in pydev:
+get_ipython().enable_pylab()
+
 #fname='/home/nfs/z3439823/backup/ncfiles/save1.00e00.376.195.nc'
 #fname='/home/nfs/z3439823/backup/ncfiles/roms_avg_8.nc'
 fname='/home/nfs/z3439823/models/roms/ocean_his.nc'
@@ -33,7 +36,7 @@ rr.set_var('u')
 sl=slice(None)
 fix1=slice(1,2,None)
 fix2=slice(4,5,None)
-tup=(fix1, -100, sl, sl )
+tup=(fix1, -3000, sl, sl )
 
 rr.set_trafo_roms()
 #rr.get_z(tup)
@@ -41,9 +44,10 @@ rr.set_zcoord_active('added')
 
 va=rr.get_var(tup)
 va=np.squeeze(va)
-plt.contourf(va)
+ 
+plt.imshow(va,interpolation='none')
 plt.show()
-    
+
 if 0:
     #print rr.modelguess
     #print rr.varname

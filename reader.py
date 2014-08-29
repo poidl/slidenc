@@ -593,85 +593,203 @@ class myreader:
             if self.model=='him':
                 return self._get_staggervec('e',varname)
             if self.model=='roms':
-                vd=self.ncr.vardims(varname)
                 # s1 (time) is 0
                 # s2 (s_rho or s_w) is 0, provided we extract the correct one in get_z
-                s2=self._get_staggervec('eta_rho',vd[2])
-                s3=self._get_staggervec('xi_rho',vd[3])
+                horzdims=self.ncr.vardims(varname)[2:]
+                hdims=self.ncr.vardims('h')
+                staggered=self._staggered_bool(hdims,horzdims)
+                if staggered[0]:
+                    dimvec1=self._get_dimvec('h',0)
+                    # TODO: don't hardcode second argument to get_dimvec. Works only when variable has same same axes than vertical var
+                    dimvec2=self._get_dimvec(varname,2)
+                    s2=self._get_staggerflag(dimvec1,dimvec2)
+                else:
+                    s2=0
+                    
+                if staggered[1]:                                                    
+                    dimvec1=self._get_dimvec('h',1)
+                    # TODO: don't hardcode second argument to get_dimvec. Works only when variable has same same axes than vertical var
+                    dimvec2=self._get_dimvec(varname,3)
+                    s3=self._get_staggerflag(dimvec1,dimvec2)
+                else:
+                    s3=0                    
+                    #stag=self._get_staggervec('zeta',vd[2])
+                    #s2=self._get_staggervec('zeta',vd[2])
+                    #s3=self._get_staggervec('xi_rho',vd[3])
                 return [0,0,s2,s3]
+  
+    def _get_dimvec(self,varname,idim):
+        dim=self.ncr.vardims(varname)[idim]
+        
+        if self.model=='him':
+            dimvec=self.ncr.ncf.variables[dim]
+        if self.model=='roms':
+            if dim=='ocean_time':
+                dimvec=self.ncr.varread('ocean_time')
+            if dim=='s_rho' or dim=='s_w':
+                dimvec=self.ncr.varread(dim) 
+            if dim=='xi_rho' or dim=='xi_v':    
+                dimvec=self.ncr.varread('x_rho')[0]                                 
+            if dim=='eta_rho' or dim=='eta_u':
+                dimvec=self.ncr.varread('y_rho')[:,0]
+            if dim=='xi_psi' or dim=='xi_u' :
+                dimvec=self.ncr.varread('x_psi')[0] 
+            if dim=='eta_psi' or dim=='eta_v' :
+                dimvec=self.ncr.varread('y_psi')[:,0]                   
+                                                        
+        return dimvec
     
-    def _get_staggervec(self,var1name,var2name):
+    def _get_staggerflag(self,vec1,vec2):
+        # vec1 and vec2 are 1 dimensional arrays
+        start=vec1[:2]
+        end=vec1[-2:]
+        v1=np.concatenate([start,end])
+        start=vec2[:2]
+        end=vec2[-2:]
+        v2=np.concatenate([start,end])
+        if v1[0]<v2[0] and v2[0]<v1[1]:
+            if v2[-2]<v1[-1] and v1[-1]<v2[-1]:
+                return 1
+            elif v1[-2]<v2[-1] and v2[-1]<v1[-1]:                
+                return 2
+            else:
+                return 99
+        elif v2[0]<v1[0] and v1[0]<v2[1]:
+            if v1[-2]<v2[-1] and v2[-1]<v1[-1]:
+                return -1
+            elif v2[-2]<v1[-1] and v1[-1]<v2[-1]:
+                return -2
+            else:
+                return 99 
+        else:
+            return 99
+        return
+
+    def _staggered_bool(self,ncdims1,ncdims2):
+        if self.model=='him':        
+            return [i!=j for i,j in zip(ncdims1,ncdims2)]
+        if self.model=='roms':
+            def roms_unique_dims(ncdims):
+                for ii in range(len(ncdims)):
+                    ncdims=list(ncdims)
+                    dim=ncdims[ii]
+                    if dim=='xi_v':
+                        ncdims[ii]='xi_rho'
+                    elif dim=='eta_u':
+                        ncdims[ii]='eta_rho'
+                    elif dim=='xi_u':
+                        ncdims[ii]='xi_psi'
+                    elif dim=='eta_v':
+                        ncdims[ii]='eta_psi'
+                return ncdims 
+            ncdims1=roms_unique_dims(ncdims1)
+            ncdims2=roms_unique_dims(ncdims2)      
+         
+            return  [i!=j for i,j in zip(ncdims1,ncdims2)]          
+#             if dim=='xi_rho' or dim=='xi_v':    
+#                 dimvec=self.ncr.varread('x_rho')[:,0]                                 
+#             if dim=='eta_rho' or dim=='eta_u':
+#                 dimvec=self.ncr.varread('y_rho')[0]
+#             if dim=='xi_psi' or dim=='xi_u':
+#                 dimvec=self.ncr.varread('x_psi')[0] 
+#             if dim=='eta_psi' or dim=='eta_v' :
+#                 dimvec=self.ncr.varread('y_psi')[0]        
+                    
+
+    def _get_staggervec(self,varname1,varname2):
         #0:--- 1:- - -  (-1): - - - (2):- - - (-2): - - -  (99): none of the above
         #  xxx    x x x      x x x       x x       x x x x     
-        ncdims1=self.ncr.vardims(var1name)
-        ncdims2=self.ncr.vardims(var2name)
-        staggered=[i!=j for i,j in zip(ncdims1,ncdims2)]
-        #print staggered
+        ncdims1=self.ncr.vardims(varname1)
+        ncdims2=self.ncr.vardims(varname2)
+        staggered=self._staggered_bool(ncdims1,ncdims2)
+        
         for i in range(len(staggered)):
             if staggered[i]:
-                start=self.ncr.ncf.variables[ncdims1[i]][:2]
-                end=self.ncr.ncf.variables[ncdims1[i]][-2:]
-                v1=np.concatenate([start,end])
-                start=self.ncr.ncf.variables[ncdims2[i]][:2]
-                end=self.ncr.ncf.variables[ncdims2[i]][-2:]
-                v2=np.concatenate([start,end])
-                if v1[0]<v2[0] and v2[0]<v1[1]:
-                    if v2[-2]<v1[-1] and v1[-1]<v2[-1]:
-                        staggered[i]=1
-                    elif v1[-2]<v2[-1] and v2[-1]<v1[-1]:                
-                        staggered[i]=2
-                    else:
-                        staggered[i]=99
-                elif v2[0]<v1[0] and v1[0]<v2[1]:
-                    if v1[-2]<v2[-1] and v2[-1]<v1[-1]:
-                        staggered[i]=-1
-                    elif v2[-2]<v1[-1] and v1[-1]<v2[-1]:
-                        staggered[i]=-2
-                    else:
-                        staggered[i]=99 
-                else:
-                    staggered[i]=99
-            else:
-                staggered[i]=0
                 
+                dimvec1=self._get_dimvec(varname1,i)
+                dimvec2=self._get_dimvec(varname2,i)
+                staggered[i]=self._get_staggerflag(dimvec1, dimvec2)
+            else:
+                
+                staggered[i]=0
+                                
         return staggered
-     
-#                z=self.ncr.varread(self.zcoord_added,tup) 
-        
-#        self.__set_dims()
-#        self.__set_shape()
-#        self.__set_shape_phys()
-        
-#    def __set_dims(self):
-#        if self.zcoords_native=='Layer':
-#            lncdims=list(self.ncdims)
-#            if 'e' in self.ncr.vars(): 
-#                self.zcoord_trafo_available=True
-#                t=(u'Layer',u'z')       
-#                ii=self.ncdims.index('Layer')
-#                lncdims[ii]=t
-#            else:
-#                print 'No interface height found'   
-#            self.dims=tuple(lncdims)
-#        
-#    def __set_shape(self):
-#        self.shape=self.ncshape 
-#        
-#    def __set_shape_phys(self):
-#        self.shape_phys=self.ncshape_phys
-#        if self.model=='him':
-#            if self.zcoord_trafo_available:
-#                e=self.ncr.varread('e',slice(None))
-#                e_lims=[e.min(), e.max()]               
-#                ii=self.ncdims.index('Layer')                
-#                layer_lims=self.ncshape_phys[ii]              
-#                self.shape_phys[ii]=[layer_lims, e_lims]
-#        
     
-#    def set_active_zcoord(self,string):
-#        if string not in ['native','z']:
-#            print 'set_active_zcoord(string): '
-#            print '     argument must be \'native\' or \'z\''
-#        if self.shape_phys()
-#            return
-#        
+#     def _get_staggervec(self,varname1,varname2):
+#         #0:--- 1:- - -  (-1): - - - (2):- - - (-2): - - -  (99): none of the above
+#         #  xxx    x x x      x x x       x x       x x x x     
+#  
+# 
+#         ncdims1=self.ncr.vardims(varname1)
+#         ncdims2=self.ncr.vardims(varname2)
+#         staggered=[i!=j for i,j in zip(ncdims1,ncdims2)]
+#         #print staggered
+#         for i in range(len(staggered)):
+#             if staggered[i]:
+#                 # only works if dimesions are variables
+#                 start=self.ncr.ncf.variables[ncdims1[i]][:2]
+#                 end=self.ncr.ncf.variables[ncdims1[i]][-2:]
+#                 v1=np.concatenate([start,end])
+#                 start=self.ncr.ncf.variables[ncdims2[i]][:2]
+#                 end=self.ncr.ncf.variables[ncdims2[i]][-2:]
+#                 v2=np.concatenate([start,end])
+#                 if v1[0]<v2[0] and v2[0]<v1[1]:
+#                     if v2[-2]<v1[-1] and v1[-1]<v2[-1]:
+#                         staggered[i]=1
+#                     elif v1[-2]<v2[-1] and v2[-1]<v1[-1]:                
+#                         staggered[i]=2
+#                     else:
+#                         staggered[i]=99
+#                 elif v2[0]<v1[0] and v1[0]<v2[1]:
+#                     if v1[-2]<v2[-1] and v2[-1]<v1[-1]:
+#                         staggered[i]=-1
+#                     elif v2[-2]<v1[-1] and v1[-1]<v2[-1]:
+#                         staggered[i]=-2
+#                     else:
+#                         staggered[i]=99 
+#                 else:
+#                     staggered[i]=99
+#             else:
+#                 staggered[i]=0
+#                 
+#         return staggered
+#      
+# #                z=self.ncr.varread(self.zcoord_added,tup) 
+#         
+# #        self.__set_dims()
+# #        self.__set_shape()
+# #        self.__set_shape_phys()
+#         
+# #    def __set_dims(self):
+# #        if self.zcoords_native=='Layer':
+# #            lncdims=list(self.ncdims)
+# #            if 'e' in self.ncr.vars(): 
+# #                self.zcoord_trafo_available=True
+# #                t=(u'Layer',u'z')       
+# #                ii=self.ncdims.index('Layer')
+# #                lncdims[ii]=t
+# #            else:
+# #                print 'No interface height found'   
+# #            self.dims=tuple(lncdims)
+# #        
+# #    def __set_shape(self):
+# #        self.shape=self.ncshape 
+# #        
+# #    def __set_shape_phys(self):
+# #        self.shape_phys=self.ncshape_phys
+# #        if self.model=='him':
+# #            if self.zcoord_trafo_available:
+# #                e=self.ncr.varread('e',slice(None))
+# #                e_lims=[e.min(), e.max()]               
+# #                ii=self.ncdims.index('Layer')                
+# #                layer_lims=self.ncshape_phys[ii]              
+# #                self.shape_phys[ii]=[layer_lims, e_lims]
+# #        
+#     
+# #    def set_active_zcoord(self,string):
+# #        if string not in ['native','z']:
+# #            print 'set_active_zcoord(string): '
+# #            print '     argument must be \'native\' or \'z\''
+# #        if self.shape_phys()
+# #            return
+# #        
