@@ -4,43 +4,33 @@ from netCDF4 import Dataset as NF
 import numpy as np
 import reader as reader
 import matplotlib.pyplot as plt
+import numpy.ma as ma
 
 # enable interactive plotting in pydev:
 #get_ipython().enable_pylab()
+#model='him'
+model='roms'
 
-fname='/home/nfs/z3439823/backup/ncfiles/save1.00e00.376.195.nc'
-#fname='/home/nfs/z3439823/backup/ncfiles/roms_avg_8.nc'
-#fname='/home/nfs/z3439823/models/roms/ocean_his.nc'
+if model=='him':
+    fname='/home/nfs/z3439823/backup/ncfiles/save1.00e00.376.195.nc'
+elif model=='roms':
+    #fname='/home/nfs/z3439823/backup/ncfiles/roms_avg_8.nc'
+    fname='/home/nfs/z3439823/models/roms/ocean_his.nc'
 
 ds=NF(fname)
-
-print dir(ds)
-#print dir(ds.dimensions['lath'])
-
-r=reader.ncreader(fname)
-
-print r.ncfname
-
-#print r.vars()
-#print r.dimlims()
-#print r.vardims('u')
-#print r.varshape_phys('u')
-#tup=(slice(None))
-#print r.varread('lonh',tup)
-
-
-
 rr=reader.myreader(fname)
 rr.set_var('u')
 
 sl=slice(None)
 fix1=slice(1,2,None)
 fix2=slice(25,26,None)
-tup=(fix1, -300, sl, sl )
+#fix2=slice(45,46,None)
+tup=(fix1, -800, sl, sl )
 #tup=(fix1, sl,fix2,  sl)
+#tup=(fix1, sl, sl, fix2)
+#tup=(sl,sl,slice(48,49,None), slice(68,69,None))
 
-#rr.set_trafo_roms()
-rr.set_trafo_him()
+rr.set_trafo(model)
 #rr.get_z(tup)
 rr.set_zcoord_active('added')
 
@@ -49,11 +39,16 @@ va=np.squeeze(va)
 
 y,x=rr.get_physgrid(tup)
 
-#plt.imshow(va,interpolation='none')
-#plt.imshow(va,interpolation='none')
-plt.pcolor(x,y,va)
+mva = ma.masked_array(va,mask=np.isnan(va))
+#m = ma.masked_where(np.isnan(va),va)
+#plt.pcolormesh(x,y,mva)
+#plt.pcolormesh(x,y,va)
+#plt.pcolormesh(va)
+plt.imshow(va,interpolation='none')
+plt.colorbar()
 plt.show()
 
+############################################
 if 0:
     #print rr.modelguess
     #print rr.varname

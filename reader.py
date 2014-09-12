@@ -83,26 +83,21 @@ class myreader:
         #self.__guess_trafo()
         #self.set_trafo_roms()
 
-    def set_trafo_him(self):
-        self.model = 'him'
-        self.zcoords_native = ['Layer', 'Interface']
-        self.zcoord_added = 'z'
-        self.zcoord_direction='normal'
-        self.set_trafo_default()
+    def set_trafo(self,trafoname):
+        if trafoname=='him':
+            self.model = 'him'
+            self.zcoords_native = ['Layer', 'Interface']
+            self.zcoord_added = 'z'
+            self.zcoord_direction='inverted' # k decreases with z
+            self.set_trafo_default()
 
-    #         self.trafodict={'lath':'lath',\
-    #                         'latq':'latq',\
-    #                         'lonh':'lonh',\
-    #                         'lonq':'lonq',\
-    #                         'Layer':'z',\
-    #                         'Interface':'Interface',\
-    #                         'Time':'Time'}
+        elif trafoname=='roms':
+            self.model = 'roms'
+            self.zcoords_native = ['s_rho', 's_w']
+            self.zcoord_added = 'z'
+            self.zcoord_direction='normal' # k increases with z
+            self.set_trafo_default()
 
-    def set_trafo_roms(self):
-        self.model = 'roms'
-        self.zcoords_native = ['s_rho', 's_w']
-        self.zcoord_added = 'z'
-        self.set_trafo_default()
 
     def set_trafo_default(self):
         self.zcoord_trafo_available = True
@@ -204,33 +199,60 @@ class myreader:
                     ztmp=z[tmptup] # view, not copy!
                     ha=np.diff(ztmp,1,self.zcoord_index)
 
-                    if self.zcoord_direction=='normal': # e.g. HIM, but not ROMS
-                        ha[ha>0.]=0. # delete bad dz's
-                        cs=np.cumsum(ha,self.zcoord_index) # recreate z
-                        ltmp[ii]=slice(0,1)
-                        ltmp2=ltmp[:]
-                        ltmp[self.zcoord_index]=slice(1,None)
-                        ltmp2[self.zcoord_index]=slice(0,1)
+                    if self.zcoord_direction=='inverted': # e.g. HIM
+                        ha=-ha
+
+                    ha[ha<0.]=0. # delete bad dz's
+                    cs=np.cumsum(ha,self.zcoord_index) # integrate
+                    ltmp[ii]=slice(0,1)
+                    ltmp2=ltmp[:]
+                    ltmp[self.zcoord_index]=slice(1,None)
+                    ltmp2[self.zcoord_index]=slice(0,1)
+
+                    if self.zcoord_direction=='inverted': # e.g. HIM
+                        ztmp[tuple(ltmp)]=ztmp[tuple(ltmp2)]-cs
+                    else:
                         ztmp[tuple(ltmp)]=ztmp[tuple(ltmp2)]+cs
 
 
-            # reduce k1 axis
-            bl = z >= zlevel
+            #### linear interpolation in z-direction
+
+            if self.zcoord_direction=='normal':
+                bl = z <= zlevel
+            if self.zcoord_direction=='inverted': # 'bottom' and 'surf' below have the opposite meaning
+                bl = z >= zlevel
+
             s = np.sum(bl, self.zcoord_index)
             s = np.squeeze(s)
 
             n1 = self.ncshape[isliceddims[0]]
             n2 = self.ncshape[isliceddims[1]]
             n3 = self.ncshape[self.zcoord_index]
-            # row major order
-            if (self.zcoord_index < isliceddims[0]) and (self.zcoord_index < isliceddims[1]):
-                sr = s.ravel()
-                raise Exception('inds1 are negative')
-                inds1 = (sr - 1) * n1 * n2 + np.arange(n1 * n2) - 1
-                bottom = inds1 >= (n3 - 1) * n1 * n2
 
-                inds2 = inds1 + n1 * n2
-                inds2[bottom] = 1  # dummy, correct later
+            # if time is fixed:
+            if (self.zcoord_index < isliceddims[0]) and (self.zcoord_index < isliceddims[1]):
+                # python has row major order
+                sr = s.ravel()
+                inds1 = np.arange(n1*n2)+ (sr-1)*n1*n2
+                inds2=inds1+n1*n2
+
+            # if z and either lat or lon is fixed:
+            if (self.zcoord_index > isliceddims[0]) and (self.zcoord_index < isliceddims[1]):
+
+                sr = s.ravel()
+
+                slowest=np.ones((n2,1),dtype='int64')*np.arange(n1)*(n2*n3) # indices are integers
+                slowest=slowest.transpose()
+                slow=n2*(sr-1)
+                fast=np.ones((n1,1),dtype='int64')*np.arange(n2)
+
+                inds1=slowest.flat+slow+fast.flat
+                inds2=inds1+n2
+
+            bottom= sr==0.
+            surf = sr==n3
+            inds1[bottom]=0 # dummy, correct later
+            inds2[surf] = 1 # dummy, correct later
 
             va1 = self.ncr.ncf.variables[self.varname][vatup].flat[inds1]
             va2 = self.ncr.ncf.variables[self.varname][vatup].flat[inds2]
@@ -238,15 +260,18 @@ class myreader:
             z2 = z.flat[inds2]
             dz = (zlevel - z2) / (z1 - z2)
             va = va2 + (va1 - va2) * dz
-            upper_only = dz == 0  # in case dz is zero and lower bottle is nan
-            va[upper_only] = va1[upper_only]
+            lower_only = dz == 0  # in case dz is zero and upper point is nan
+            va[lower_only] = va1[lower_only]
 
-            # correct bottom
-            va[bottom] = self.ncr.ncf.variables[self.varname][vatup].flat[inds1[bottom]]
+            # correct bottom and surface
+            va[bottom]=np.nan
+            va[surf] = self.ncr.ncf.variables[self.varname][vatup].flat[inds1[surf]]
             inan = z.flat[inds1] > zlevel
-            va[bottom[inan]] = np.nan
+            va[np.logical_and(surf,inan)] = np.nan
 
             va = np.reshape(va, (n1, n2))
+
+            #### end linear interpolation in z-direction
 
         else:
             va = self.ncr.varread(self.varname, tup)
