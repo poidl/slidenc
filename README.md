@@ -11,8 +11,6 @@ when the user picks a variable, draws a colour-filled 2D contour plot.
 If the variable has more than two dimensions, sliders are provided for 
 each additional dimension -- slide n see:)
 
-Visit the [project website](http://www.hoitaus.com/drupal/?q=modelling_tools) to try out slidenc with a single mouse click.
-
 Dependencies: python, pyqt4, numpy, matplotlib, netCDF4
 
 Usage: 
