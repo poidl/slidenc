@@ -18,9 +18,9 @@
 
 # We start from an example file for user_interfaces/embedding_in_qt4
 # available on the matplotlib website.
-from PyQt4 import QtGui
+from PyQt5 import QtGui, QtWidgets
 import numpy as np
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 import defaultReader
@@ -139,8 +139,8 @@ class MyMplCanvas(FigureCanvas):
         self.setParent(parent)
         
         FigureCanvas.setSizePolicy(self,
-                                   QtGui.QSizePolicy.Expanding,
-                                   QtGui.QSizePolicy.Expanding)
+                                   QtWidgets.QSizePolicy.Expanding,
+                                   QtWidgets.QSizePolicy.Expanding)
         
         FigureCanvas.updateGeometry(self)
 

@@ -14,7 +14,7 @@
 #################################################################
 
 import sys,os
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 from functools import partial as fpartial
 import data_plot as dp
 
@@ -22,19 +22,19 @@ progname = os.path.basename(sys.argv[0])
 
 progversion = "0.0"
 
-class button_box(QtGui.QGroupBox):
+class button_box(QtWidgets.QGroupBox):
     def __init__(self,flag,ndims_max,parent=None):
-        QtGui.QGroupBox.__init__(self,parent)       
+        QtWidgets.QGroupBox.__init__(self,parent)       
         self.buttonlist=[]
         inds=range(ndims_max) if flag==True else range(ndims_max-1) 
         for ii in inds:
-            self.buttonlist.append(QtGui.QRadioButton())
+            self.buttonlist.append(QtWidgets.QRadioButton())
             self.buttonlist[-1].setCheckable(True)
         
-        if flag==True: layout= QtGui.QHBoxLayout()
-        else: layout= QtGui.QVBoxLayout()
+        if flag==True: layout= QtWidgets.QHBoxLayout()
+        else: layout= QtWidgets.QVBoxLayout()
         
-        self.modeGroup=QtGui.QButtonGroup()
+        self.modeGroup=QtWidgets.QButtonGroup()
         self.modeGroup.setExclusive(True)
         
         for ii in self.buttonlist: 
@@ -42,8 +42,8 @@ class button_box(QtGui.QGroupBox):
             self.modeGroup.addButton(ii)
         
         self.setLayout(layout)
-        self.setSizePolicy(QtGui.QSizePolicy.Maximum,
-                                   QtGui.QSizePolicy.Maximum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
+                                   QtWidgets.QSizePolicy.Maximum)
         layout.setContentsMargins(0,0,0,0)
 
         for ii in self.buttonlist: ii.hide()
@@ -64,31 +64,31 @@ class button_box(QtGui.QGroupBox):
             if ii==inds[0]: self.buttonlist[ii].setChecked(True)              
                                     
 
-class myslider(QtGui.QWidget):
+class myslider(QtWidgets.QWidget):
     def __init__(self,*args):
-        QtGui.QWidget.__init__(self,*args)
+        QtWidgets.QWidget.__init__(self,*args)
         
-        self.mylabel = QtGui.QLabel() 
-        self.mylcd = QtGui.QLCDNumber()  
+        self.mylabel = QtWidgets.QLabel() 
+        self.mylcd = QtWidgets.QLCDNumber()  
         self.mylcd.setSegmentStyle(2)            
-        self.myslider = QtGui.QSlider(QtCore.Qt.Horizontal)  
+        self.myslider = QtWidgets.QSlider(QtCore.Qt.Horizontal)  
                                       
-        layout=QtGui.QHBoxLayout()
+        layout=QtWidgets.QHBoxLayout()
         self.setLayout(layout)
         layout.addWidget(self.mylabel)
         layout.addWidget(self.mylcd)
         layout.addWidget(self.myslider)
         layout.setContentsMargins(3,3,3,3)
 
-class slider_box(QtGui.QWidget):
+class slider_box(QtWidgets.QWidget):
     def __init__(self,ndims_max,*args):
-        QtGui.QWidget.__init__(self,*args) 
+        QtWidgets.QWidget.__init__(self,*args) 
         self.sliderlist=[] 
         for ii in range(ndims_max):
             sl=myslider()          
             self.sliderlist.append(sl)
             
-        layout= QtGui.QVBoxLayout(self)
+        layout= QtWidgets.QVBoxLayout(self)
         for ii in self.sliderlist: 
             layout.addWidget(ii)
         layout.setContentsMargins(0,0,0,0)
@@ -115,33 +115,33 @@ class slider_box(QtGui.QWidget):
             
             
             
-class MainWidget(QtGui.QWidget):
+class MainWidget(QtWidgets.QWidget):
     def __init__(self):
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
         
         self.canvas=dp.MyStaticMplCanvas()
 
         self.buttons_horz=button_box(True,dp.ndims_max)
         self.buttons_vert=button_box(False,dp.ndims_max)                                                   
                                
-        grpbox_contourf=QtGui.QGroupBox('Contour fill',self)
-        grpbox_contourf.setLayout(QtGui.QHBoxLayout())
+        grpbox_contourf=QtWidgets.QGroupBox('Contour fill',self)
+        grpbox_contourf.setLayout(QtWidgets.QHBoxLayout())
 
-        self.combo1 = QtGui.QComboBox(self)
+        self.combo1 = QtWidgets.QComboBox(self)
         grpbox_contourf.layout().addWidget(self.combo1)
         
-        self.grpbox_contour=QtGui.QGroupBox('Show contours',self) 
+        self.grpbox_contour=QtWidgets.QGroupBox('Show contours',self) 
         self.grpbox_contour.setCheckable(True)
         self.grpbox_contour.setChecked(False)
-        self.combo2 = QtGui.QComboBox(self)
-        self.grpbox_contour.setLayout(QtGui.QHBoxLayout())
+        self.combo2 = QtWidgets.QComboBox(self)
+        self.grpbox_contour.setLayout(QtWidgets.QHBoxLayout())
         self.grpbox_contour.layout().addWidget(self.combo2)
         
-        sublayout_varpicker = QtGui.QHBoxLayout()
+        sublayout_varpicker = QtWidgets.QHBoxLayout()
         sublayout_varpicker.addWidget(grpbox_contourf)
         sublayout_varpicker.addWidget(self.grpbox_contour)
         
-        layout_upper = QtGui.QGridLayout()
+        layout_upper = QtWidgets.QGridLayout()
         layout_upper.addWidget(self.buttons_vert,0,0)
         layout_upper.addWidget(self.canvas,0,1)
         layout_upper.addWidget(self.buttons_horz,1,1,QtCore.Qt.AlignHCenter)
@@ -149,11 +149,11 @@ class MainWidget(QtGui.QWidget):
         
         self.sliderbox=slider_box(dp.ndims_max)
         
-        layout_lower=QtGui.QVBoxLayout()
+        layout_lower=QtWidgets.QVBoxLayout()
         layout_lower.addWidget(self.sliderbox)        
         layout_lower.addLayout(sublayout_varpicker)
         
-        layout_main = QtGui.QVBoxLayout(self)        
+        layout_main = QtWidgets.QVBoxLayout(self)        
         layout_main.addLayout(layout_upper)
         layout_main.addLayout(layout_lower) 
 
@@ -228,25 +228,25 @@ class MainWidget(QtGui.QWidget):
         self.setcombo2()
 
 
-class ApplicationWindow(QtGui.QMainWindow):
+class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
-        QtGui.QMainWindow.__init__(self)
+        QtWidgets.QMainWindow.__init__(self)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)                               
         self.main_widget=MainWidget()
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
         
 ##################################################################   
-        exitAction = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)        
+        exitAction = QtWidgets.QAction(QtGui.QIcon('exit.png'), '&Exit', self)        
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Exit application')
-        exitAction.triggered.connect(QtGui.qApp.quit)
-        openFile = QtGui.QAction(QtGui.QIcon('open.png'), 'Open', self)
+        exitAction.triggered.connect(QtWidgets.qApp.quit)
+        openFile = QtWidgets.QAction(QtGui.QIcon('open.png'), 'Open', self)
         openFile.setShortcut('Ctrl+O')
         openFile.setStatusTip('Open new File')
         openFile.triggered.connect(self.showDialog)
         
-        reloadFile = QtGui.QAction(QtGui.QIcon('reload.png'), 'Reload', self)
+        reloadFile = QtWidgets.QAction(QtGui.QIcon('reload.png'), 'Reload', self)
         reloadFile.setShortcut('Ctrl+R')
         reloadFile.setStatusTip('Reload File')      
         reloadFile.triggered.connect(self.fileReload)
@@ -280,7 +280,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.main_widget.pick_cf_var(self.main_widget.canvas.pdata.reader.keys_2d_variables[0])
    
     def showDialog(self):
-        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file', 
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file', 
                 '/home')
         self.main_widget.canvas.pdata.reader.open(fname)
         self.main_widget.setcombo1()
@@ -289,7 +289,7 @@ class ApplicationWindow(QtGui.QMainWindow):
     def closeEvent(self, ce):
         self.fileQuit()
 
-qApp = QtGui.QApplication(sys.argv)
+qApp = QtWidgets.QApplication(sys.argv)
 
 aw = ApplicationWindow()
 aw.setWindowTitle("%s" % progname)
