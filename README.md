@@ -11,7 +11,7 @@ when the user picks a variable, draws a colour-filled 2D contour plot.
 If the variable has more than two dimensions, sliders are provided for 
 each additional dimension -- slide n see:)
 
-Dependencies: python, pyqt4, numpy, matplotlib, netCDF4
+Dependencies: python, pyqt5, numpy, matplotlib, netCDF4-python
 
 Usage: 
 
@@ -20,7 +20,5 @@ Start the program by changing into the slidenc folder and typing
 	python slidenc.py
 	
 in a terminal
-
-Dependencies: numpy, netCDF4-python, matplotlib, pyqt4
 
 Stefan Riha  hoitaus@gmail.com
