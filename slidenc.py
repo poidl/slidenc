@@ -196,7 +196,7 @@ class MainWidget(QtWidgets.QWidget):
         self.buttons_vert.update_txt(self.canvas.pdata.myax) 
                   
     def slot_buttons_vert(self,idnr):
-        goof=self.canvas.pdata.myax.dim_names.index(self.buttons_vert.buttonlist[idnr].text())           
+        goof=self.canvas.pdata.myax.dim_names.index(self.buttons_vert.buttonlist[idnr].text() .replace('&', ''))           
         self.canvas.pdata.myax.permute(self.canvas.pdata.myax.ndims-2,goof)
         self.canvas.pdata.update()
         self.canvas.update_figure()         

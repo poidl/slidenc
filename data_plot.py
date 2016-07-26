@@ -38,7 +38,7 @@ class myax():
     def setax(self,reader,string):
         self.dim_names=reader.ff.variables[str(string)].dimensions
         self.ndims=len(self.dim_names)
-        self.perm=range(self.ndims)        
+        self.perm=list(range(self.ndims))   
         self.sl_inds_ini=[0]*(self.ndims-2) 
         self.sl_inds=self.sl_inds_ini[:]
     def permute(self,ind,val):
