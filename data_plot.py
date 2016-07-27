@@ -18,9 +18,9 @@
 
 # We start from an example file for user_interfaces/embedding_in_qt4
 # available on the matplotlib website.
-from PyQt4 import QtGui
+from PyQt5 import QtGui, QtWidgets
 import numpy as np
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 import defaultReader
@@ -47,7 +47,7 @@ class myax():
             self.vertaxEnableChoices='True'
 
         self.ndims=len(self.dim_names)
-        self.perm=range(self.ndims)
+        self.perm=list(range(self.ndims))
         self.flip=[False]*self.ndims
         self.coords=['dim']*self.ndims
         self.sl_inds_ini=[0]*(self.ndims-2)
@@ -222,8 +222,8 @@ class MyMplCanvas(FigureCanvas):
         self.setParent(parent)
 
         FigureCanvas.setSizePolicy(self,
-                                   QtGui.QSizePolicy.Expanding,
-                                   QtGui.QSizePolicy.Expanding)
+                                   QtWidgets.QSizePolicy.Expanding,
+                                   QtWidgets.QSizePolicy.Expanding)
 
         FigureCanvas.updateGeometry(self)
 
@@ -246,9 +246,9 @@ class MyStaticMplCanvas(MyMplCanvas):
         z=self.pdata.field_2d
         if self.pdata.vertical_trafo is True:
         #if 1:
-            print x.shape
-            print y.shape
-            print z.shape
+            # print x.shape
+            # print y.shape
+            # print z.shape
 #            x=x[1:,:]
 #            y=y[1:,:]
 #            z=z[:,1:]
@@ -292,9 +292,9 @@ class MyStaticMplCanvas(MyMplCanvas):
         y=self.pdata.y
         z=self.pdata.field_2d_c
 
-        print x.shape
-        print y.shape
-        print z.shape
+        # print x.shape
+        # print y.shape
+        # print z.shape
 
         tt=np.abs(z)
         tt2=tt[~np.isnan(tt)]
@@ -302,7 +302,7 @@ class MyStaticMplCanvas(MyMplCanvas):
         if not np.all( tt2-np.max(tt2)==0. ):
             if self.pdata.vertical_trafo is True:
                 if hasattr(self.pdata,'ivert'):
-                    print self.pdata.ivert
+                    # print self.pdata.ivert
                     if self.pdata.ivert is 0:
                         x=0.5*(x[:-1,:]+x[1:,:])
                         y=0.5*(y[:-1,:]+y[1:,:])
@@ -311,9 +311,9 @@ class MyStaticMplCanvas(MyMplCanvas):
                         #y=y[:,1:]
                         x=0.5*(x[:,:-1]+x[:,1:])
                         y=0.5*(y[:,:-1]+y[:,1:])
-                print x.shape
-                print y.shape
-                print z.shape
+                # print x.shape
+                # print y.shape
+                # print z.shape
             self.cs=self.axes.contour(x,y,z,colors='k')
 
             self.cs.clabel()

@@ -27,7 +27,7 @@ class reader:
 
     def open(self,string):
         self.fname=string
-        self.ff = NF(str(string), 'r')
+        self.ff = NF(str(string[0]), 'r')
         li=self.ff.variables.keys()
         self.keys_2d_variables=[]
         for ii in li:

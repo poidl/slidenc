@@ -14,7 +14,7 @@
 #################################################################
 
 import sys,os
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 from functools import partial as fpartial
 import data_plot as dp
 
@@ -22,20 +22,20 @@ progname = os.path.basename(sys.argv[0])
 
 progversion = "0.0"
 
-class button_box(QtGui.QGroupBox):
+class button_box(QtWidgets.QGroupBox):
     def __init__(self,flag,ndims_max,parent=None):
-        QtGui.QGroupBox.__init__(self,parent)
+        QtWidgets.QGroupBox.__init__(self,parent)
         self.buttonlist=[]
         inds=range(ndims_max) if flag==True else range(ndims_max-1)
         for ii in inds:
-            self.buttonlist.append(QtGui.QRadioButton())
+            self.buttonlist.append(QtWidgets.QRadioButton())
             self.buttonlist[-1].setCheckable(True)
 
-        if flag==True: layout= QtGui.QHBoxLayout()
+        if flag==True: layout= QtWidgets.QHBoxLayout()
         else:
-            layout= QtGui.QVBoxLayout()
+            layout= QtWidgets.QVBoxLayout()
 
-        self.modeGroup=QtGui.QButtonGroup()
+        self.modeGroup=QtWidgets.QButtonGroup()
         self.modeGroup.setExclusive(True)
 
         for ii in self.buttonlist:
@@ -43,8 +43,8 @@ class button_box(QtGui.QGroupBox):
             self.modeGroup.addButton(ii)
 
         self.setLayout(layout)
-        self.setSizePolicy(QtGui.QSizePolicy.Maximum,
-                                   QtGui.QSizePolicy.Maximum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
+                                   QtWidgets.QSizePolicy.Maximum)
         layout.setContentsMargins(0,0,0,0)
 
         for ii in self.buttonlist: ii.hide()
@@ -65,18 +65,18 @@ class button_box(QtGui.QGroupBox):
             if ii==inds[0]: self.buttonlist[ii].setChecked(True)
 
 
-class myslider(QtGui.QWidget):
+class myslider(QtWidgets.QWidget):
     def __init__(self,*args):
-        QtGui.QWidget.__init__(self,*args)
+        QtWidgets.QWidget.__init__(self,*args)
 
-        self.mylabel = QtGui.QLabel()
-        self.mylcd = QtGui.QLCDNumber()
+        self.mylabel = QtWidgets.QLabel()
+        self.mylcd = QtWidgets.QLCDNumber()
         self.mylcd.setSegmentStyle(2)
-        self.mylcd2 = QtGui.QLCDNumber()
+        self.mylcd2 = QtWidgets.QLCDNumber()
         self.mylcd2.setSegmentStyle(2)
-        self.myslider = QtGui.QSlider(QtCore.Qt.Horizontal)
+        self.myslider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
 
-        layout=QtGui.QHBoxLayout()
+        layout=QtWidgets.QHBoxLayout()
         self.setLayout(layout)
         layout.addWidget(self.mylabel)
         layout.addWidget(self.mylcd)
@@ -84,15 +84,15 @@ class myslider(QtGui.QWidget):
         layout.addWidget(self.myslider)
         layout.setContentsMargins(3,3,3,3)
 
-class slider_box(QtGui.QWidget):
+class slider_box(QtWidgets.QWidget):
     def __init__(self,ndims_max,*args):
-        QtGui.QWidget.__init__(self,*args)
+        QtWidgets.QWidget.__init__(self,*args)
         self.sliderlist=[]
         for ii in range(ndims_max):
             sl=myslider()
             self.sliderlist.append(sl)
 
-        layout= QtGui.QVBoxLayout(self)
+        layout= QtWidgets.QVBoxLayout(self)
         for ii in self.sliderlist:
             layout.addWidget(ii)
         layout.setContentsMargins(0,0,0,0)
@@ -122,9 +122,9 @@ class slider_box(QtGui.QWidget):
 
 
 
-class MainWidget(QtGui.QWidget):
+class MainWidget(QtWidgets.QWidget):
     def __init__(self,myax):
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
 
         self.popup=MyPopup(myax,dp.ndims_max,parent=self)
         #self.popup.setParent(self)
@@ -136,32 +136,32 @@ class MainWidget(QtGui.QWidget):
         self.buttons_vert=button_box(False,dp.ndims_max)
 
 
-        grpbox_contourf=QtGui.QGroupBox('Contour fill',self)
-        grpbox_contourf.setLayout(QtGui.QHBoxLayout())
+        grpbox_contourf=QtWidgets.QGroupBox('Contour fill',self)
+        grpbox_contourf.setLayout(QtWidgets.QHBoxLayout())
 
-        self.combo1 = QtGui.QComboBox(self)
+        self.combo1 = QtWidgets.QComboBox(self)
         grpbox_contourf.layout().addWidget(self.combo1)
 
-        self.grpbox_contour=QtGui.QGroupBox('Show contours',self)
+        self.grpbox_contour=QtWidgets.QGroupBox('Show contours',self)
         self.grpbox_contour.setCheckable(True)
         self.grpbox_contour.setChecked(False)
-        self.combo2 = QtGui.QComboBox(self)
-        self.grpbox_contour.setLayout(QtGui.QHBoxLayout())
+        self.combo2 = QtWidgets.QComboBox(self)
+        self.grpbox_contour.setLayout(QtWidgets.QHBoxLayout())
         self.grpbox_contour.layout().addWidget(self.combo2)
 
-#        self.grpbox_axis=QtGui.QGroupBox('Vertical axis',self)
-#        self.grpbox_axis.setLayout(QtGui.QHBoxLayout())
-#        self.combo3 = QtGui.QComboBox(self)
+#        self.grpbox_axis=QtWidgets.QGroupBox('Vertical axis',self)
+#        self.grpbox_axis.setLayout(QtWidgets.QHBoxLayout())
+#        self.combo3 = QtWidgets.QComboBox(self)
 #        self.grpbox_axis.layout().addWidget(self.combo3)
-#        sublayout_axispicker = QtGui.QHBoxLayout()
+#        sublayout_axispicker = QtWidgets.QHBoxLayout()
 #        sublayout_axispicker.addWidget(self.grpbox_axis)
 
 
-        sublayout_varpicker = QtGui.QHBoxLayout()
+        sublayout_varpicker = QtWidgets.QHBoxLayout()
         sublayout_varpicker.addWidget(grpbox_contourf)
         sublayout_varpicker.addWidget(self.grpbox_contour)
 
-        layout_upper = QtGui.QGridLayout()
+        layout_upper = QtWidgets.QGridLayout()
         layout_upper.addWidget(self.buttons_vert,0,0)
         layout_upper.addWidget(self.canvas,0,1)
         layout_upper.addWidget(self.buttons_horz,1,1,QtCore.Qt.AlignHCenter)
@@ -169,12 +169,12 @@ class MainWidget(QtGui.QWidget):
 
         self.sliderbox=slider_box(dp.ndims_max)
 
-        layout_lower=QtGui.QVBoxLayout()
+        layout_lower=QtWidgets.QVBoxLayout()
         layout_lower.addWidget(self.sliderbox)
 #        layout_lower.addLayout(sublayout_axispicker)
         layout_lower.addLayout(sublayout_varpicker)
 
-        layout_main = QtGui.QVBoxLayout(self)
+        layout_main = QtWidgets.QVBoxLayout(self)
         layout_main.addLayout(layout_upper)
         layout_main.addLayout(layout_lower)
 
@@ -235,7 +235,7 @@ class MainWidget(QtGui.QWidget):
 
     def slot_buttons_vert(self,idnr):
         myax=self.canvas.pdata.myax
-        goof=myax.dim_names.index(self.buttons_vert.buttonlist[idnr].text())
+        goof=myax.dim_names.index(self.buttons_vert.buttonlist[idnr].text().replace('&',''))
         myax.permute(myax.ndims-2,goof)
         self.canvas.pdata.update()
         self.canvas.update_figure()
@@ -292,22 +292,22 @@ class MainWidget(QtGui.QWidget):
 class Communicate(QtCore.QObject):
     signal = QtCore.pyqtSignal()
 
-class MyPopup(QtGui.QWidget):
+class MyPopup(QtWidgets.QWidget):
     def __init__(self,myax,ndims_max,parent=None):
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
         self.myax=myax
 
-        self.box1=QtGui.QGroupBox('Flip dimension')
+        self.box1=QtWidgets.QGroupBox('Flip dimension')
 
         self.buttonlist1=[]
         inds=range(ndims_max)
         for ii in inds:
-            self.buttonlist1.append(QtGui.QCheckBox(self))
+            self.buttonlist1.append(QtWidgets.QCheckBox(self))
             self.buttonlist1[-1].setCheckable(True)
 
-        layout1= QtGui.QVBoxLayout(self)
+        layout1= QtWidgets.QVBoxLayout(self)
 
-        self.modeGroup1=QtGui.QButtonGroup(self)
+        self.modeGroup1=QtWidgets.QButtonGroup(self)
         self.modeGroup1.setExclusive(False)
 
         for ii in self.buttonlist1:
@@ -316,39 +316,39 @@ class MyPopup(QtGui.QWidget):
 
         self.box1.setLayout(layout1)
 
-        #self.box1.setSizePolicy(QtGui.QSizePolicy.Maximum,
-        #                           QtGui.QSizePolicy.Maximum)
+        #self.box1.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
+        #                           QtWidgets.QSizePolicy.Maximum)
         #layout.setContentsMargins(0,0,0,0)
         for ii in self.buttonlist1: ii.hide()
 
 
 
 ############################
-        self.box2=QtGui.QGroupBox('Coordinates')
+        self.box2=QtWidgets.QGroupBox('Coordinates')
         self.buttonlist2=[]
         # maximum number of transformations per dimension
         ntrans_max=3
         inds=range(ndims_max*ntrans_max)
         for ii in inds:
-            self.buttonlist2.append(QtGui.QCheckBox(self))
+            self.buttonlist2.append(QtWidgets.QCheckBox(self))
             self.buttonlist2[-1].setCheckable(True)
 
-        layout2= QtGui.QGridLayout()
+        layout2= QtWidgets.QGridLayout()
         # each element of this list is a buttongroup.
         # one buttongroup for each dimension
         self.modeGroup2_list=[]
         inds=range(ndims_max)
         for ii in inds:
-            self.modeGroup2_list.append(QtGui.QButtonGroup(self))
+            self.modeGroup2_list.append(QtWidgets.QButtonGroup(self))
             self.modeGroup2_list[-1].setExclusive(True)
 #
         self.labelvert=[]
         self.labelhorz=[]
         for ii in range(ndims_max+1):
-            self.labelvert.append(QtGui.QLabel(self))
+            self.labelvert.append(QtWidgets.QLabel(self))
             layout2.addWidget(self.labelvert[-1],ii,0)
         for ii in range(ndims_max):
-            self.labelhorz.append(QtGui.QLabel())
+            self.labelhorz.append(QtWidgets.QLabel())
             layout2.addWidget(self.labelhorz[-1],0,ii+1)
 
         for ii in range(len(self.buttonlist2)):
@@ -369,11 +369,11 @@ class MyPopup(QtGui.QWidget):
         self.box2.setLayout(layout2)
 
 ############################
-        #grid = QtGui.QGridLayout(self)
+        #grid = QtWidgets.QGridLayout(self)
         #grid.addWidget(self.box1,0,0)
         #grid.addWidget(self.box2,1,0)
 
-        layout_main = QtGui.QVBoxLayout(self)
+        layout_main = QtWidgets.QVBoxLayout(self)
         layout_main.addWidget(self.box1)
         layout_main.addWidget(self.box2)
 
@@ -413,9 +413,9 @@ class MyPopup(QtGui.QWidget):
         self.adjustSize()
 
 
-class ApplicationWindow(QtGui.QMainWindow):
+class ApplicationWindow(QtWidgets.QMainWindow):
     def __init__(self):
-        QtGui.QMainWindow.__init__(self)
+        QtWidgets.QMainWindow.__init__(self)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.myax=dp.myax()
         self.main_widget=MainWidget(self.myax)
@@ -423,21 +423,21 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.setCentralWidget(self.main_widget)
 
 ##################################################################
-        exitAction = QtGui.QAction(QtGui.QIcon('exit.png'), '&Exit', self)
+        exitAction = QtWidgets.QAction(QtGui.QIcon('exit.png'), '&Exit', self)
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Exit application')
-        exitAction.triggered.connect(QtGui.qApp.quit)
-        openFile = QtGui.QAction(QtGui.QIcon('open.png'), 'Open', self)
+        exitAction.triggered.connect(QtWidgets.qApp.quit)
+        openFile = QtWidgets.QAction(QtGui.QIcon('open.png'), 'Open', self)
         openFile.setShortcut('Ctrl+O')
         openFile.setStatusTip('Open new File')
         openFile.triggered.connect(self.showDialog)
 
-        reloadFile = QtGui.QAction(QtGui.QIcon('reload.png'), 'Reload', self)
+        reloadFile = QtWidgets.QAction(QtGui.QIcon('reload.png'), 'Reload', self)
         reloadFile.setShortcut('Ctrl+R')
         reloadFile.setStatusTip('Reload File')
         reloadFile.triggered.connect(self.fileReload)
 
-        axisDialog2 = QtGui.QAction(QtGui.QIcon('axis2.png'), 'Transforms2', self)
+        axisDialog2 = QtWidgets.QAction(QtGui.QIcon('axis2.png'), 'Transforms2', self)
         axisDialog2.setShortcut('Ctrl+T')
         axisDialog2.setStatusTip('View available coordinate transforms')
         axisDialog2.triggered.connect(self.showAxisDialog)
@@ -475,7 +475,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.openfile(fname)
 
     def showDialog(self):
-        fname = QtGui.QFileDialog.getOpenFileName(self, 'Open file',
+        fname = QtWidgets.QFileDialog.getOpenFileName(self, 'Open file',
                 '/home')
         self.openfile(fname)
 
@@ -485,7 +485,7 @@ class ApplicationWindow(QtGui.QMainWindow):
     def closeEvent(self, ce):
         self.fileQuit()
 
-qApp = QtGui.QApplication(sys.argv)
+qApp = QtWidgets.QApplication(sys.argv)
 
 aw = ApplicationWindow()
 aw.setWindowTitle("%s" % progname)
