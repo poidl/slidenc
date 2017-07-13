@@ -16,7 +16,7 @@
 import sys,os
 from PyQt5 import QtGui, QtCore, QtWidgets
 from functools import partial as fpartial
-import data_plot as dp
+import slidenc.data_plot as dp
 
 progname = os.path.basename(sys.argv[0])
 
@@ -485,9 +485,11 @@ class ApplicationWindow(QtWidgets.QMainWindow):
     def closeEvent(self, ce):
         self.fileQuit()
 
-qApp = QtWidgets.QApplication(sys.argv)
 
-aw = ApplicationWindow()
-aw.setWindowTitle("%s" % progname)
-aw.show()
-sys.exit(qApp.exec_())
+def main():
+    qApp = QtWidgets.QApplication(sys.argv)
+
+    aw = ApplicationWindow()
+    aw.setWindowTitle("%s" % progname)
+    aw.show()
+    sys.exit(qApp.exec_())
