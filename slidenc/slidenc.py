@@ -121,7 +121,6 @@ class slider_box(QtWidgets.QWidget):
             except: pass
 
 
-
 class MainWidget(QtWidgets.QWidget):
     def __init__(self,myax):
         QtWidgets.QWidget.__init__(self)
@@ -194,7 +193,6 @@ class MainWidget(QtWidgets.QWidget):
     def showpop(self):
         self.popup.show()
 #########
-
 
 
     def pick_cf_var(self,varname):
@@ -320,7 +318,6 @@ class MyPopup(QtWidgets.QWidget):
         #                           QtWidgets.QSizePolicy.Maximum)
         #layout.setContentsMargins(0,0,0,0)
         for ii in self.buttonlist1: ii.hide()
-
 
 
 ############################
@@ -487,9 +484,13 @@ class ApplicationWindow(QtWidgets.QMainWindow):
 
 
 def main():
+    """Main program"""
     qApp = QtWidgets.QApplication(sys.argv)
 
     aw = ApplicationWindow()
     aw.setWindowTitle("%s" % progname)
     aw.show()
     sys.exit(qApp.exec_())
+
+if __name__ == '__main__':
+    main()
