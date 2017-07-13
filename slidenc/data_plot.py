@@ -23,7 +23,8 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-import defaultReader
+
+import slidenc.defaultReader as defaultReader
 
 
 ndims_max=5
