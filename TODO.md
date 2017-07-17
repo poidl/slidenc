@@ -1,0 +1,1 @@
+* don't react to plot picker when no file is selected
