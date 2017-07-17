@@ -135,19 +135,23 @@ class MainWidget(QtWidgets.QWidget):
         self.buttons_vert=button_box(False,dp.ndims_max)
 
 
-        self.grpbox_contourf=QtWidgets.QGroupBox('Plot type',self)
-        self.grpbox_contourf.setLayout(QtWidgets.QHBoxLayout())
-        self.grpbox_contourf.setCheckable(True)
-        self.grpbox_contourf.setChecked(False)
+        self.grpbox_colourplot=QtWidgets.QGroupBox('Colour plot',self)
+        self.grpbox_colourplot.setLayout(QtWidgets.QHBoxLayout())
         self.combo1 = QtWidgets.QComboBox(self)
-        self.grpbox_contourf.layout().addWidget(self.combo1)
+        self.grpbox_colourplot.layout().addWidget(self.combo1)
 
-        self.grpbox_contour=QtWidgets.QGroupBox('Show contours',self)
+        self.grpbox_contour=QtWidgets.QGroupBox('Line contours',self)
         self.grpbox_contour.setCheckable(True)
         self.grpbox_contour.setChecked(False)
         self.combo2 = QtWidgets.QComboBox(self)
         self.grpbox_contour.setLayout(QtWidgets.QHBoxLayout())
         self.grpbox_contour.layout().addWidget(self.combo2)
+
+        self.grpbox_plottype=QtWidgets.QGroupBox('',self)
+        self.grpbox_plottype.setLayout(QtWidgets.QHBoxLayout())
+        self.check1 = QtWidgets.QCheckBox('Pcolormesh',self)
+        self.grpbox_plottype.layout().addWidget(self.check1)
+
 
 #        self.grpbox_axis=QtWidgets.QGroupBox('Vertical axis',self)
 #        self.grpbox_axis.setLayout(QtWidgets.QHBoxLayout())
@@ -158,8 +162,9 @@ class MainWidget(QtWidgets.QWidget):
 
 
         sublayout_varpicker = QtWidgets.QHBoxLayout()
-        sublayout_varpicker.addWidget(self.grpbox_contourf)
+        sublayout_varpicker.addWidget(self.grpbox_colourplot)
         sublayout_varpicker.addWidget(self.grpbox_contour)
+        sublayout_varpicker.addWidget(self.grpbox_plottype)
 
         layout_upper = QtWidgets.QGridLayout()
         layout_upper.addWidget(self.buttons_vert,0,0)
@@ -171,17 +176,20 @@ class MainWidget(QtWidgets.QWidget):
 
         layout_lower=QtWidgets.QVBoxLayout()
         layout_lower.addWidget(self.sliderbox)
-#        layout_lower.addLayout(sublayout_axispicker)
         layout_lower.addLayout(sublayout_varpicker)
 
         layout_main = QtWidgets.QVBoxLayout(self)
         layout_main.addLayout(layout_upper)
         layout_main.addLayout(layout_lower)
 
+        # self.grpbox_colourplot.setCheckable(True)
+        # self.grpbox_colourplot.setChecked(False)
+
+
         self.combo1.activated[str].connect(self.pick_cf_var)
-        self.grpbox_contourf.toggled.connect(self.toggle_plot_type)
         self.grpbox_contour.toggled.connect(self.toggle_contours)
         self.combo2.activated[str].connect(self.pick_c_var)
+        self.check1.toggled.connect(self.toggle_plot_type)
         self.buttons_horz.modeGroup.buttonClicked[int].connect(self.slot_buttons_horz)
         self.buttons_vert.modeGroup.buttonClicked[int].connect(self.slot_buttons_vert)
 

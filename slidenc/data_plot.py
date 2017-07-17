@@ -25,7 +25,8 @@ from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 import slidenc.defaultReader as defaultReader
 import regrid as regrid
-
+from netCDF4 import Dataset as NF
+# from reader import ncreader as ncr
 
 ndims_max=5
 class myax():
@@ -128,64 +129,113 @@ class pdata:
 
         li= [str(self.myax.dim_names[self.myax.perm[-1]]),
              str(self.myax.dim_names[self.myax.perm[-2]])]
+        print(li)
         if 'Interface' in li:
             self.vertical_dimname='Interface'
             self.vertical_trafo=True
         elif 'Layer' in li:
             self.vertical_dimname='Layer'
             self.vertical_trafo=True
+        elif 's_rho' in li:
+            self.vertical_dimname='s_rho'
+            self.vertical_trafo=True
         else:
             self.vertical='z'
             self.vertical_trafo=False
 
         if self.vertical_trafo is True:
-            # read interface heights for plots against vertical axes
-            try: e=self.myax.get_var('e')
-            except:
-                try: e=self.myax.get_var('etm')
-                except:  'No interface height found'
+
+            ##################################################
+            # ROMS
+
+            tup = (slice(None), slice(None), slice(None), slice(None))
+            li = list(tup)
+            li[self.myax.perm[0]] = self.myax.sl_inds[0]
+            li[self.myax.perm[1]] = self.myax.sl_inds[1]
+            tup = tuple(li)
+            # # read interface heights for plots against vertical axes
+            # try: e = ncf.variables['s_rho'][:]
+            # except:
+            #     # try: e=self.myax.get_var('etm')
+            #     # except:  'Could not find s_rho'
+            #     print('Could not find s_rho')
 
             #get the axis of the 2d-slice along which to transform
             self.ivert=[d1,d2].index( self.myax.dim_names.index(self.vertical_dimname) )
             self.inonvert = not self.ivert
 
-            def regrid_vertcoord(e):
-                #assume that the variable is horz. velocity
-                #of HIM
-                if self.ivert==0:
-                    e=np.c_[e[:,0],0.5*(e[:,:-1]+e[:,1:]),e[:,-1]]
-                return e
+            ncf = NF(str(self.myax.reader.fname), 'r')
+            vtrans = ncf.variables['Vtransform'][:]
+            hc = ncf.variables['hc'][:]
+            s_ = ncf.variables['s_rho'][:]
+            Cs_ = ncf.variables['Cs_r'][:]
+            # 2d horizontal
+            h = ncf.variables['h'][:]
+
+            if vtrans == 2:
+
+                S = (hc * s_[:, None, None] + h[None, :, :] * Cs_[:, None, None]) / \
+                    (hc + h[None, :, :])
+                # zsurf = ncf.variables[('zeta', (envtup[0],) + envtup[2:])
+                zsurf = ncf.variables['zeta'][:]
+                # z=zsurf+(zsurf+h)*S
+                zz = zsurf[:, None, :, :] + (zsurf[:, None, :, :] + h[None, None, :, :]) * S[None, :, :, :]
+            
+                zz = zz[tup]
+                if np.logical_xor( self.transp==True, self.ivert>self.inonvert ):
+                    (self.x,self.y) = (zz,self.x)
+                else: (self.x,self.y) =(self.x,zz)
+
+            # ##################################################
+            # # HIM
+            # #     
+            # # read interface heights for plots against vertical axes
+            # try: e=self.myax.get_var('e')
+            # except:
+            #     try: e=self.myax.get_var('etm')
+            #     except:  'No interface height found'
+
+            # #get the axis of the 2d-slice along which to transform
+            # self.ivert=[d1,d2].index( self.myax.dim_names.index(self.vertical_dimname) )
+            # self.inonvert = not self.ivert
+
+            # def regrid_vertcoord(e):
+            #     #assume that the variable is horz. velocity
+            #     #of HIM
+            #     if self.ivert==0:
+            #         e=np.c_[e[:,0],0.5*(e[:,:-1]+e[:,1:]),e[:,-1]]
+            #     return e
 
 
-            #if the vertical coordinate is defined on a different
-            #horizontal grid as the variable to plot, do this:
-            if self.field_2d.shape[self.inonvert] != e.shape[self.inonvert]:
-                e=regrid_vertcoord(e)
+            # #if the vertical coordinate is defined on a different
+            # #horizontal grid as the variable to plot, do this:
+            # if self.field_2d.shape[self.inonvert] != e.shape[self.inonvert]:
+            #     e=regrid_vertcoord(e)
 
-            ivert_full=[d1,d2][self.ivert]
-            if self.myax.coords[ivert_full]=='grd':
-                e,tr=np.meshgrid(range(e.shape[self.ivert]),range(e.shape[self.inonvert]))
-                if self.ivert<=self.inonvert:
-                    e=e.transpose()
-            inonvert_full=[d1,d2][self.inonvert]
-            # x1 holds the non-vertical coordinate
-            if self.myax.coords[inonvert_full]=='dim':
-                x1=self.myax.dim_vals[inonvert_full]
-            elif self.myax.coords[inonvert_full]=='grd':
-                x1=self.myax.dim_inds[inonvert_full]
-            x1=np.r_[[x1]*e.shape[self.ivert]]
-            if self.ivert>self.inonvert:
-                x1=x1.transpose()
+            # ivert_full=[d1,d2][self.ivert]
+            # if self.myax.coords[ivert_full]=='grd':
+            #     e,tr=np.meshgrid(range(e.shape[self.ivert]),range(e.shape[self.inonvert]))
+            #     if self.ivert<=self.inonvert:
+            #         e=e.transpose()
+            # inonvert_full=[d1,d2][self.inonvert]
+            # # x1 holds the non-vertical coordinate
+            # if self.myax.coords[inonvert_full]=='dim':
+            #     x1=self.myax.dim_vals[inonvert_full]
+            # elif self.myax.coords[inonvert_full]=='grd':
+            #     x1=self.myax.dim_inds[inonvert_full]
+            # x1=np.r_[[x1]*e.shape[self.ivert]]
+            # if self.ivert>self.inonvert:
+            #     x1=x1.transpose()
 
-            if self.cf_str is 'e':
-                # color indicates number of layer
-                c=np.ones((e.shape[self.inonvert]))
-                c=np.r_[[ii*c for ii in range(e.shape[self.ivert]-1)]]
-                self.field_2d=c
+            # if self.cf_str is 'e':
+            #     # color indicates number of layer
+            #     c=np.ones((e.shape[self.inonvert]))
+            #     c=np.r_[[ii*c for ii in range(e.shape[self.ivert]-1)]]
+            #     self.field_2d=c
 
-            if np.logical_xor( self.transp==True, self.ivert>self.inonvert ):
-                (self.x,self.y) = (e,x1)
-            else: (self.x,self.y) =(x1,e)
+            # if np.logical_xor( self.transp==True, self.ivert>self.inonvert ):
+            #     (self.x,self.y) = (e,x1)
+            # else: (self.x,self.y) =(x1,e)
 
         else:
             if self.transp==True:
@@ -254,6 +304,34 @@ class MyStaticMplCanvas(MyMplCanvas):
 #            x=x[1:,:]
 #            y=y[1:,:]
 #            z=z[:,1:]
+            if x.ndim == 2:
+                gr = np.array(x.shape) - np.array(x.shape)
+            if y.ndim == 2:
+                gr = np.array(y.shape) - np.array(y.shape)
+
+
+            tup = (slice(None), slice(None))
+            li = list(tup)
+            if gr[0] == 1:
+                li[0] = slice(None,-1)
+            else:
+                li[1] = slice(None,-1)
+            tup = tuple(li)
+
+            if x.ndim == 1:
+                if len(x) == z.shape[0]:
+                    x = x[:, None]*np.ones((1, z.shape[1]))
+                else:
+                    x = x[None,:]*np.ones((z.shape[0], 1))
+                y = y[tup]
+            if y.ndim == 1:
+                if len(y) == z.shape[0]:
+                    y = y[:, None]*np.ones((1, z.shape[1]))
+                else:
+                    y = y[None,:]*np.ones((z.shape[0], 1))
+                x = x[tup]
+
+
 
             self.axes.pcolormesh(x,y,z)
             #self.axes.contourf(x,y,z)
