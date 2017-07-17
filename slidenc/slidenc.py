@@ -135,11 +135,12 @@ class MainWidget(QtWidgets.QWidget):
         self.buttons_vert=button_box(False,dp.ndims_max)
 
 
-        grpbox_contourf=QtWidgets.QGroupBox('Contour fill',self)
-        grpbox_contourf.setLayout(QtWidgets.QHBoxLayout())
-
+        self.grpbox_contourf=QtWidgets.QGroupBox('Plot type',self)
+        self.grpbox_contourf.setLayout(QtWidgets.QHBoxLayout())
+        self.grpbox_contourf.setCheckable(True)
+        self.grpbox_contourf.setChecked(False)
         self.combo1 = QtWidgets.QComboBox(self)
-        grpbox_contourf.layout().addWidget(self.combo1)
+        self.grpbox_contourf.layout().addWidget(self.combo1)
 
         self.grpbox_contour=QtWidgets.QGroupBox('Show contours',self)
         self.grpbox_contour.setCheckable(True)
@@ -157,7 +158,7 @@ class MainWidget(QtWidgets.QWidget):
 
 
         sublayout_varpicker = QtWidgets.QHBoxLayout()
-        sublayout_varpicker.addWidget(grpbox_contourf)
+        sublayout_varpicker.addWidget(self.grpbox_contourf)
         sublayout_varpicker.addWidget(self.grpbox_contour)
 
         layout_upper = QtWidgets.QGridLayout()
@@ -178,6 +179,7 @@ class MainWidget(QtWidgets.QWidget):
         layout_main.addLayout(layout_lower)
 
         self.combo1.activated[str].connect(self.pick_cf_var)
+        self.grpbox_contourf.toggled.connect(self.toggle_plot_type)
         self.grpbox_contour.toggled.connect(self.toggle_contours)
         self.combo2.activated[str].connect(self.pick_c_var)
         self.buttons_horz.modeGroup.buttonClicked[int].connect(self.slot_buttons_horz)
@@ -205,6 +207,14 @@ class MainWidget(QtWidgets.QWidget):
 
     def pick_c_var(self,varname):
         self.canvas.pdata.c_str=str(varname)
+        self.canvas.pdata.update_c()
+        self.canvas.update_figure()
+
+    def toggle_plot_type(self,on):
+        if on == False:
+            self.canvas.pdata.plot_type="contourf"
+        else:
+            self.canvas.pdata.plot_type="pcolormesh"
         self.canvas.pdata.update_c()
         self.canvas.update_figure()
 
@@ -281,7 +291,7 @@ class MainWidget(QtWidgets.QWidget):
 
     def slot_setCoords(self,idnr):
         myax=self.canvas.pdata.myax
-        line=idnr/2
+        line=int(idnr/2)
         col=idnr%2
         myax.coords[line]=['dim','grd'][col]
         self.canvas.pdata.update()

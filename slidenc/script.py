@@ -8,8 +8,8 @@ import numpy.ma as ma
 
 # enable interactive plotting in pydev:
 #get_ipython().enable_pylab()
-model='him'
-#model='roms'
+# model='him'
+model='roms'
 
 if model=='him':
     fname='/home/nfs/z3439823/backup/ncfiles/save1.00e00.376.195.nc'

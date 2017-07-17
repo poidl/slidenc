@@ -24,6 +24,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 import slidenc.defaultReader as defaultReader
+import regrid as regrid
 
 
 ndims_max=5
@@ -107,6 +108,7 @@ class pdata:
         self.c_str=''
         self.myax=myax
         self.transp=False
+        self.plot_type="contourf"
         self.show_contours=False
         self.field_2d=np.nan
         self.field_2d_c=np.nan
@@ -263,7 +265,12 @@ class MyStaticMplCanvas(MyMplCanvas):
                 self.axes.add_line(myline)
 
         else:
-            self.a=self.axes.contourf(x,y,z,30)
+            if self.pdata.plot_type == "pcolormesh":
+                x = regrid.envelope(x)
+                y = regrid.envelope(y)
+                self.a=self.axes.pcolormesh(x,y,z)
+            else: 
+                self.a=self.axes.contourf(x,y,z,30)
 
         #flip plot along a dimension?
         tmp=self.pdata.myax.perm[-2:]
