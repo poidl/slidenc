@@ -6,3 +6,4 @@ dist
 cleanall
 makeall
 doitall
+merge_conflicts
