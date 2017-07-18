@@ -358,7 +358,7 @@ class MyStaticMplCanvas(MyMplCanvas):
                 self.a=self.axes.contourf(x,y,z,30)
         
         if self.pdata.uv_quiver:
-            self.pdata.transpose()
+            self.pdata.set_uv()
             u = self.pdata.u
             v = self.pdata.v
             if u.shape[0] == v.shape[0]+1:
