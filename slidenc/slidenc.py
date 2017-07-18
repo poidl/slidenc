@@ -149,8 +149,10 @@ class MainWidget(QtWidgets.QWidget):
 
         self.grpbox_plottype=QtWidgets.QGroupBox('',self)
         self.grpbox_plottype.setLayout(QtWidgets.QHBoxLayout())
-        self.check1 = QtWidgets.QCheckBox('Pcolormesh',self)
-        self.grpbox_plottype.layout().addWidget(self.check1)
+        self.check1_pcolor = QtWidgets.QCheckBox('Pcolormesh',self)
+        self.check2_quiver = QtWidgets.QCheckBox('U, V quiver',self)
+        self.grpbox_plottype.layout().addWidget(self.check1_pcolor)
+        self.grpbox_plottype.layout().addWidget(self.check2_quiver)
 
 
 #        self.grpbox_axis=QtWidgets.QGroupBox('Vertical axis',self)
@@ -189,7 +191,8 @@ class MainWidget(QtWidgets.QWidget):
         self.combo1.activated[str].connect(self.pick_cf_var)
         self.grpbox_contour.toggled.connect(self.toggle_contours)
         self.combo2.activated[str].connect(self.pick_c_var)
-        self.check1.toggled.connect(self.toggle_plot_type)
+        self.check1_pcolor.toggled.connect(self.toggle_plot_type)
+        self.check2_quiver.toggled.connect(self.toggle_uv_quiver)
         self.buttons_horz.modeGroup.buttonClicked[int].connect(self.slot_buttons_horz)
         self.buttons_vert.modeGroup.buttonClicked[int].connect(self.slot_buttons_vert)
 
@@ -223,7 +226,13 @@ class MainWidget(QtWidgets.QWidget):
             self.canvas.pdata.plot_type="contourf"
         else:
             self.canvas.pdata.plot_type="pcolormesh"
-        self.canvas.pdata.update_c()
+        self.canvas.update_figure()
+
+    def toggle_uv_quiver(self,on):
+        if on == False:
+            self.canvas.pdata.uv_quiver=False
+        else:
+            self.canvas.pdata.uv_quiver=True
         self.canvas.update_figure()
 
     def toggle_contours(self,on):

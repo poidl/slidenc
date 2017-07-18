@@ -113,12 +113,19 @@ class pdata:
         self.show_contours=False
         self.field_2d=np.nan
         self.field_2d_c=np.nan
+        self.u=np.nan
+        self.v=np.nan
+        self.uv_quiver=False
         self.vertical_dimname=''
         self.vertical_trafo=False
 
     def update(self):
         self.update_cf()
         self.update_c()
+
+    def set_uv(self):
+        self.u=self.myax.get_var('u')
+        self.v=self.myax.get_var('v')
 
     def update_cf(self):
 
@@ -305,16 +312,16 @@ class MyStaticMplCanvas(MyMplCanvas):
 #            y=y[1:,:]
 #            z=z[:,1:]
             if x.ndim == 2:
-                gr = np.array(x.shape) - np.array(x.shape)
+                gr = np.array(z.shape) - np.array(x.shape)
             if y.ndim == 2:
-                gr = np.array(y.shape) - np.array(y.shape)
+                gr = np.array(z.shape) - np.array(y.shape)
 
 
             tup = (slice(None), slice(None))
             li = list(tup)
-            if gr[0] == 1:
+            if gr[0] == -1:
                 li[0] = slice(None,-1)
-            else:
+            elif gr[1] == -1:
                 li[1] = slice(None,-1)
             tup = tuple(li)
 
@@ -349,6 +356,18 @@ class MyStaticMplCanvas(MyMplCanvas):
                 self.a=self.axes.pcolormesh(x,y,z)
             else: 
                 self.a=self.axes.contourf(x,y,z,30)
+        
+        if self.pdata.uv_quiver:
+            self.pdata.transpose()
+            u = self.pdata.u
+            v = self.pdata.v
+            if u.shape[0] == v.shape[0]+1:
+                u = u[:-1,:]
+            if u.shape[1] == v.shape[1]-1:
+                v = v[:,:-1]
+            self.axes.quiver(u,v)
+
+
 
         #flip plot along a dimension?
         tmp=self.pdata.myax.perm[-2:]
