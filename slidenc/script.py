@@ -80,7 +80,7 @@ if 0:
 
     rr.cellgrid=False
     y,x=rr.get_physgrid(tup)
-    print u.shape
+    print(u.shape)
 
     rr.get_physgrid2(tup)
     #print x.shape

@@ -15,7 +15,7 @@
 
 from netCDF4 import Dataset as NF
 import numpy as np
-import regrid as regrid
+import slidenc.regrid as regr
 
 
 class ncreader:
@@ -77,7 +77,7 @@ class myreader:
     def set_var(self, string):
         self.varname = string
         if self.varname not in self.ncvars:
-            print 'variable \'' + string + '\' not in netcdf file'
+            print('variable \'' + string + '\' not in netcdf file')
             return
         self._ncread_vardata()
         #self.__guess_trafo()
@@ -144,7 +144,7 @@ class myreader:
         #ifixeddims = [i for i, x in enumerate(tup) if x != slice(None)]
         #sliceddims = [self.ncdims[i] for i in isliceddims]
 
-        regr = regrid.regrid()
+        regr = regr.regrid()
 
         if self.zcoord_index != isliceddims[0]:
             x = self._get_physdimvec(self.varname,isliceddims[0])
@@ -192,7 +192,7 @@ class myreader:
         # extract envelope tuple of zeta
         z = self._get_z(envtup)
         # reduce other (than k) fixed dimension to singleton
-        regr = regrid.regrid()
+        regr = regr.regrid()
         z = regr.reduce(z, envtup, guessed)
 
         # re-grid 3d zeta onto grid of v
@@ -600,7 +600,7 @@ class myreader:
                 if ztmp=='s_rho':
                     self.zcoord_native_var='s_rho' # restore
 
-        regr = regrid.regrid()
+        regr = regr.regrid()
         z = regr.reduce(z, envtup, guessed)
         z = np.squeeze(z)
 

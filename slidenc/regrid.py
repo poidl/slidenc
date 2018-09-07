@@ -18,38 +18,38 @@ import numpy as np
 class regrid:
 
     def envelope(x, axis=-1):
-    """
-    Regrid to envelope.
+        """
+        Regrid to envelope.
 
-    Parameters
-    ----------
-    x: array of arbitrary dimension
-    axis: axis along which to regrid
-    """
+        Parameters
+        ----------
+        x: array of arbitrary dimension
+        axis: axis along which to regrid
+        """
 
-    shape = list(x.shape)
-    shape[axis] = shape[axis] + 1
-    xn = np.nan * np.ones(shape)
+        shape = list(x.shape)
+        shape[axis] = shape[axis] + 1
+        xn = np.nan * np.ones(shape)
 
-    dx = np.diff(x, 1, axis=axis)
+        dx = np.diff(x, 1, axis=axis)
 
-    s = [slice(None)]
-    t = s * x.ndim
-    t1 = t.copy()
-    t2l = t.copy()
-    t2r = t.copy()
-    t3 = t.copy()
-    t1[axis] = slice(0, 1)
-    t2l[axis] = slice(1, -1, None)
-    t2r[axis] = slice(None, -1, None)
-    t3[axis] = slice(-1, None)
+        s = [slice(None)]
+        t = s * x.ndim
+        t1 = t.copy()
+        t2l = t.copy()
+        t2r = t.copy()
+        t3 = t.copy()
+        t1[axis] = slice(0, 1)
+        t2l[axis] = slice(1, -1, None)
+        t2r[axis] = slice(None, -1, None)
+        t3[axis] = slice(-1, None)
 
-    xn[t2l] = x[t2r] + 0.5 * dx
+        xn[t2l] = x[t2r] + 0.5 * dx
 
-    xn[t1] = x[t1] - 0.5 * dx[t1]
-    xn[t3] = x[t3] + 0.5 * dx[t3]
+        xn[t1] = x[t1] - 0.5 * dx[t1]
+        xn[t3] = x[t3] + 0.5 * dx[t3]
 
-    return xn
+        return xn
 
     def reduce(self,var,envtup,guessed):
         # example: if var.shape is (5,5,2) and l[2] is not slice(None)
@@ -84,9 +84,9 @@ class regrid:
                 var=0.5*(var[tup1]+var[tup2])
             elif g==1: # extrapolation at origin
                 var=var[tup1]-0.5*(var[tup2]-var[tup1])
-                print 'extrap. at origin'
+                print('extrap. at origin')
             elif g==2: # extrapolation at end
-                print 'extrap. at end'
+                print('extrap. at end')
                 var=var[tup2]+0.5*(var[tup2]-var[tup1])
 
             l[i]=slice(0,1,None)
@@ -99,7 +99,7 @@ class regrid:
         l=[slice(None),slice(3,5,None),slice(None),slice(3,5,None)]
         guessed=[0,0,0,0]
         out=self.reduce(va,l,guessed)
-        print out.shape
+        print(out.shape)
 
 
     def d1_point_to_cellvertices(self,var):

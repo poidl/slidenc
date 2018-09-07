@@ -24,7 +24,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
 import slidenc.defaultReader as defaultReader
-import regrid as regrid
+import slidenc.regrid as regrid
 from netCDF4 import Dataset as NF
 # from reader import ncreader as ncr
 
